@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 
 function getTextContent(children: React.ReactNode): string {
@@ -41,11 +41,32 @@ function ResponseContent({ content }: { content: string }) {
   );
 }
 
+type Panel = "feed" | "newton";
+
 export default function Home() {
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<Panel>("feed");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToPanel = useCallback((panel: Panel) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const index = panel === "feed" ? 0 : 1;
+    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
+    setActivePanel(panel);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollLeft = el.scrollLeft;
+    const width = el.clientWidth;
+    const index = Math.round(scrollLeft / width);
+    setActivePanel(index === 0 ? "feed" : "newton");
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -92,45 +113,59 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-white px-4 py-12 sm:px-6">
-      <main className="flex w-full max-w-2xl flex-col items-center">
+    <div className="flex min-h-screen w-full flex-col bg-white">
+      <header className="flex shrink-0 flex-col items-center px-4 pt-12 pb-6 sm:px-6 sm:pb-8">
         {/* Logo */}
-        <h1 className="mb-12 font-serif text-5xl font-normal tracking-tight text-[#171717] sm:mb-16 sm:text-6xl md:text-7xl">
+        <h1 className="mb-6 font-serif text-5xl font-normal tracking-tight text-[#171717] sm:mb-8 sm:text-6xl md:text-7xl">
           Newton
         </h1>
 
-        {/* Search bar */}
-        <form onSubmit={handleSubmit} className="relative mb-10 w-full sm:mb-12">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask Newton anything..."
-            disabled={isLoading}
-            className="w-full rounded-full border border-[#e5e5e5] bg-white py-3.5 pl-5 pr-14 text-base text-[#171717] placeholder:text-[#737373] transition-colors focus:border-[#a3a3a3] focus:outline-none focus:ring-0 disabled:opacity-60 sm:py-4 sm:pl-6 sm:pr-16 sm:text-lg"
-            aria-label="Search"
-          />
+        {/* Tab switcher */}
+        <div
+          role="tablist"
+          aria-label="Switch between Feed and Newton"
+          className="flex rounded-full border border-[#e5e5e5] bg-[#fafafa] p-1"
+        >
           <button
-            type="submit"
-            disabled={isLoading}
-            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#171717] text-white transition-opacity hover:opacity-90 disabled:opacity-60 sm:right-3 sm:h-10 sm:w-10"
-            aria-label="Send"
+            role="tab"
+            aria-selected={activePanel === "feed"}
+            onClick={() => scrollToPanel("feed")}
+            className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 sm:px-6 ${
+              activePanel === "feed"
+                ? "bg-white text-[#171717] shadow-sm"
+                : "text-[#737373] hover:text-[#525252]"
+            }`}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-4 w-4 translate-x-0.5 sm:h-[18px] sm:w-[18px]"
-            >
-              <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-            </svg>
+            Feed
           </button>
-        </form>
+          <button
+            role="tab"
+            aria-selected={activePanel === "newton"}
+            onClick={() => scrollToPanel("newton")}
+            className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 sm:px-6 ${
+              activePanel === "newton"
+                ? "bg-white text-[#171717] shadow-sm"
+                : "text-[#737373] hover:text-[#525252]"
+            }`}
+          >
+            Newton
+          </button>
+        </div>
+      </header>
 
-        {/* AI News Feed */}
-        <section className="mb-10 w-full max-w-xl sm:mb-12">
-          <div className="flex flex-col items-center gap-4 sm:gap-5">
-            {/* Card 1 */}
+      {/* Swipeable panel container */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory scroll-smooth px-4 pb-12 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {/* Panel 1: Feed */}
+        <section
+          role="tabpanel"
+          aria-label="Feed"
+          className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
+        >
+          <div className="flex w-full max-w-xl flex-col items-center gap-4 sm:gap-5">
             <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
               <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
                 Research
@@ -154,7 +189,6 @@ export default function Home() {
               </div>
             </article>
 
-            {/* Card 2 */}
             <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
               <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
                 Industry
@@ -178,7 +212,6 @@ export default function Home() {
               </div>
             </article>
 
-            {/* Card 3 */}
             <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
               <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
                 Breakthrough
@@ -204,66 +237,79 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Response / Loading / Error */}
-        <div className="mb-10 w-full sm:mb-12">
-          {isLoading && (
-            <div className="flex items-center gap-2 text-[#737373]">
-              <svg
-                className="h-4 w-4 animate-spin"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+        {/* Panel 2: Newton (search + response) */}
+        <section
+          role="tabpanel"
+          aria-label="Newton"
+          className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
+        >
+          <div className="flex w-full max-w-2xl flex-col items-center">
+            <form onSubmit={handleSubmit} className="relative mb-10 w-full sm:mb-12">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Ask Newton anything..."
+                disabled={isLoading}
+                className="w-full rounded-full border border-[#e5e5e5] bg-white py-3.5 pl-5 pr-14 text-base text-[#171717] placeholder:text-[#737373] transition-colors focus:border-[#a3a3a3] focus:outline-none focus:ring-0 disabled:opacity-60 sm:py-4 sm:pl-6 sm:pr-16 sm:text-lg"
+                aria-label="Search"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#171717] text-white transition-opacity hover:opacity-90 disabled:opacity-60 sm:right-3 sm:h-10 sm:w-10"
+                aria-label="Send"
               >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
                   fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span className="text-sm">Thinking...</span>
-            </div>
-          )}
-          {error && !isLoading && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
-          {response && !isLoading && (
-            <div className="rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-5 py-4">
-              <ResponseContent content={response} />
-            </div>
-          )}
-        </div>
+                  className="h-4 w-4 translate-x-0.5 sm:h-[18px] sm:w-[18px]"
+                >
+                  <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                </svg>
+              </button>
+            </form>
 
-        {/* Navigation strip */}
-        <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-[#525252] sm:gap-x-10">
-          <a
-            href="#"
-            className="transition-colors hover:text-[#171717]"
-          >
-            Recent Papers
-          </a>
-          <a
-            href="#"
-            className="transition-colors hover:text-[#171717]"
-          >
-            Science News
-          </a>
-          <a
-            href="#"
-            className="transition-colors hover:text-[#171717]"
-          >
-            Discoveries
-          </a>
-        </nav>
-      </main>
+            <div className="w-full">
+              {isLoading && (
+                <div className="flex items-center gap-2 text-[#737373]">
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-sm">Thinking...</span>
+                </div>
+              )}
+              {error && !isLoading && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+              {response && !isLoading && (
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-5 py-4">
+                  <ResponseContent content={response} />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
