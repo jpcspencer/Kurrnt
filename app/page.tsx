@@ -1,6 +1,45 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+
+function getTextContent(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(getTextContent).join("");
+  if (children && typeof children === "object" && "props" in children) {
+    return getTextContent((children as React.ReactElement).props.children);
+  }
+  return "";
+}
+
+function ResponseContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => {
+          const text = getTextContent(children);
+          if (text.trimStart().startsWith("⚡ NoC")) {
+            return (
+              <div className="mt-4 rounded-lg border border-[#e5e0da] bg-[#f5f2ee] px-4 py-3.5 first:mt-0">
+                <p className="text-[15px] leading-relaxed text-[#171717] [&>strong]:font-bold [&>strong]:text-[#171717]">
+                  {children}
+                </p>
+              </div>
+            );
+          }
+          return <p className="mb-3 last:mb-0 text-[15px] leading-relaxed text-[#171717]">{children}</p>;
+        },
+        strong: ({ children }) => <strong className="font-semibold text-[#171717]">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="my-3 list-disc pl-5 space-y-1">{children}</ul>,
+        ol: ({ children }) => <ol className="my-3 list-decimal pl-5 space-y-1">{children}</ol>,
+        li: ({ children }) => <li className="text-[15px] leading-relaxed">{children}</li>,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 
 export default function Home() {
   const [message, setMessage] = useState("");
@@ -88,6 +127,83 @@ export default function Home() {
           </button>
         </form>
 
+        {/* AI News Feed */}
+        <section className="mb-10 w-full max-w-xl sm:mb-12">
+          <div className="flex flex-col items-center gap-4 sm:gap-5">
+            {/* Card 1 */}
+            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
+              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
+                Research
+              </span>
+              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
+                Multimodal models achieve human-level reasoning on science benchmarks
+              </h2>
+              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
+                A new evaluation framework reveals that frontier models now match expert human performance across physics, chemistry, and biology. The gap between AI and human scientific reasoning has narrowed significantly in the past year.
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
+                >
+                  Go deeper with Newton
+                </button>
+                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-26">
+                  2 hours ago
+                </time>
+              </div>
+            </article>
+
+            {/* Card 2 */}
+            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
+              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
+                Industry
+              </span>
+              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
+                Major cloud providers announce unified AI inference pricing
+              </h2>
+              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
+                Three leading cloud platforms have aligned their pricing models for large language model inference, potentially lowering costs for enterprise deployments. Analysts expect the move to accelerate adoption of on-demand AI workloads.
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
+                >
+                  Go deeper with Newton
+                </button>
+                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-26">
+                  5 hours ago
+                </time>
+              </div>
+            </article>
+
+            {/* Card 3 */}
+            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
+              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
+                Breakthrough
+              </span>
+              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
+                First AI system passes full medical licensing exam without fine-tuning
+              </h2>
+              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
+                A zero-shot model achieved passing scores across all sections of a national medical board exam. The result suggests general-purpose models may soon assist in high-stakes clinical decision support without domain-specific training.
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
+                >
+                  Go deeper with Newton
+                </button>
+                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-25">
+                  Yesterday
+                </time>
+              </div>
+            </article>
+          </div>
+        </section>
+
         {/* Response / Loading / Error */}
         <div className="mb-10 w-full sm:mb-12">
           {isLoading && (
@@ -121,9 +237,7 @@ export default function Home() {
           )}
           {response && !isLoading && (
             <div className="rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-5 py-4">
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#171717]">
-                {response}
-              </p>
+              <ResponseContent content={response} />
             </div>
           )}
         </div>
