@@ -59,18 +59,8 @@ export default function Home() {
     setActivePanel(panel);
   }, []);
 
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const scrollLeft = el.scrollLeft;
-    const width = el.clientWidth;
-    const index = Math.round(scrollLeft / width);
-    setActivePanel(index === 0 ? "feed" : "newton");
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = message.trim();
+  async function submitQuery(query: string) {
+    const trimmed = query.trim();
     if (!trimmed || isLoading) return;
 
     setIsLoading(true);
@@ -112,6 +102,27 @@ export default function Home() {
     }
   }
 
+  function handleGoDeeper(headline: string) {
+    scrollToPanel("newton");
+    const question = `Tell me more about ${headline} — and what's the non-obvious connection here?`;
+    setMessage(question);
+    submitQuery(question);
+  }
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollLeft = el.scrollLeft;
+    const width = el.clientWidth;
+    const index = Math.round(scrollLeft / width);
+    setActivePanel(index === 0 ? "feed" : "newton");
+  }, []);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submitQuery(message);
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-white">
       <header className="flex shrink-0 flex-col items-center px-4 pt-12 pb-6 sm:px-6 sm:pb-8">
@@ -124,15 +135,15 @@ export default function Home() {
         <div
           role="tablist"
           aria-label="Switch between Feed and Newton"
-          className="flex rounded-full border border-[#e5e5e5] bg-[#fafafa] p-1"
+          className="flex gap-1"
         >
           <button
             role="tab"
             aria-selected={activePanel === "feed"}
             onClick={() => scrollToPanel("feed")}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 sm:px-6 ${
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
               activePanel === "feed"
-                ? "bg-white text-[#171717] shadow-sm"
+                ? "bg-[#171717] text-white"
                 : "text-[#737373] hover:text-[#525252]"
             }`}
           >
@@ -142,9 +153,9 @@ export default function Home() {
             role="tab"
             aria-selected={activePanel === "newton"}
             onClick={() => scrollToPanel("newton")}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 sm:px-6 ${
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
               activePanel === "newton"
-                ? "bg-white text-[#171717] shadow-sm"
+                ? "bg-[#171717] text-white"
                 : "text-[#737373] hover:text-[#525252]"
             }`}
           >
@@ -179,6 +190,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="button"
+                  onClick={() => handleGoDeeper("Multimodal models achieve human-level reasoning on science benchmarks")}
                   className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
                 >
                   Go deeper with Newton
@@ -202,6 +214,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="button"
+                  onClick={() => handleGoDeeper("Major cloud providers announce unified AI inference pricing")}
                   className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
                 >
                   Go deeper with Newton
@@ -225,6 +238,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="button"
+                  onClick={() => handleGoDeeper("First AI system passes full medical licensing exam without fine-tuning")}
                   className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
                 >
                   Go deeper with Newton
