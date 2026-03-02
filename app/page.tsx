@@ -107,6 +107,7 @@ export default function Home() {
   const [feedError, setFeedError] = useState<string | null>(null);
   const [cardSize, setCardSize] = useState<CardSize>("default");
   const [feedView, setFeedView] = useState<FeedView>("card");
+  const [expandedArticle, setExpandedArticle] = useState<FeedArticle | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function cycleCardSize() {
@@ -121,6 +122,20 @@ export default function Home() {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     setIsDark(stored === "dark");
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpandedArticle(null);
+    };
+    if (expandedArticle) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
+  }, [expandedArticle]);
 
   const fetchFeed = useCallback(() => {
     setFeedLoading(true);
@@ -228,6 +243,98 @@ export default function Home() {
         isDark ? "bg-[#0a0a0a]" : "bg-white"
       }`}
     >
+      {/* Article expansion modal */}
+      {expandedArticle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 animate-[overlay-fade-in_0.15s_ease-out]"
+            onClick={() => setExpandedArticle(null)}
+            aria-hidden="true"
+          />
+          <div
+            className={`relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg border shadow-xl animate-[modal-fade-in_0.2s_ease-out] ${
+              isDark ? "border-[#404040] bg-[#171717]" : "border-[#e8e8e8] bg-white"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setExpandedArticle(null)}
+              aria-label="Close"
+              className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
+                isDark ? "text-[#a3a3a3] hover:text-[#ededed]" : "text-[#737373] hover:text-[#525252]"
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+            <div className="px-6 py-6 pr-14 sm:px-8 sm:py-8 sm:pr-16">
+              <span className={`mb-2 inline-block text-xs font-medium uppercase tracking-wider ${isDark ? "text-[#a3a3a3]" : "text-[#737373]"}`}>
+                {expandedArticle.sourceName}
+              </span>
+              <h2 id="modal-title" className={`mb-2 font-serif text-2xl font-normal leading-tight sm:text-3xl ${isDark ? "text-[#ededed]" : "text-[#171717]"}`}>
+                {expandedArticle.title}
+              </h2>
+              <div className="mb-4 flex items-center gap-3">
+                <time className={`text-xs ${isDark ? "text-[#737373]" : "text-[#a3a3a3]"}`} dateTime={expandedArticle.publishedAt}>
+                  {formatRelativeTime(expandedArticle.publishedAt)}
+                </time>
+                <div className="flex gap-0.5" aria-label={`Importance: ${getImportanceScore(expandedArticle.title)} of 5`}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                        i <= getImportanceScore(expandedArticle.title)
+                          ? isDark
+                            ? "bg-[#ededed]"
+                            : "bg-[#171717]"
+                          : isDark
+                            ? "border border-[#404040] bg-transparent"
+                            : "border border-[#d4d4d4] bg-transparent"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className={`mb-6 text-[15px] leading-relaxed ${isDark ? "text-[#a3a3a3]" : "text-[#525252]"}`}>
+                {expandedArticle.description}
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => handleGoDeeper(expandedArticle.title)}
+                  className={`w-fit rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                    isDark
+                      ? "border-[#ededed] bg-transparent text-[#ededed] hover:bg-[#ededed] hover:text-[#171717]"
+                      : "border-[#171717] bg-white text-[#171717] hover:bg-[#171717] hover:text-white"
+                  }`}
+                >
+                  Go deeper with Newton
+                </button>
+                <a
+                  href={expandedArticle.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                    isDark ? "text-[#a3a3a3] hover:text-[#ededed]" : "text-[#525252] hover:text-[#171717]"
+                  }`}
+                >
+                  Read original article
+                  <span aria-hidden>→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dark mode toggle */}
       <button
         type="button"
@@ -482,7 +589,11 @@ export default function Home() {
                 return (
                   <article
                     key={article.url || index}
-                    className={`relative w-full rounded-lg border transition-shadow ${borderCls} ${
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setExpandedArticle(article)}
+                    onKeyDown={(e) => e.key === "Enter" && setExpandedArticle(article)}
+                    className={`relative w-full cursor-pointer rounded-lg border transition-shadow ${borderCls} ${
                       isCompact ? "px-4 py-3 sm:px-4 sm:py-3" : isComfortable ? "px-6 py-6 sm:px-8 sm:py-7" : "px-5 py-5 sm:px-6 sm:py-6"
                     }`}
                   >
@@ -530,7 +641,10 @@ export default function Home() {
                       <div className={`flex flex-wrap items-center justify-between gap-3 ${isComfortable ? "mt-1" : ""}`}>
                         <button
                           type="button"
-                          onClick={() => handleGoDeeper(article.title)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGoDeeper(article.title);
+                          }}
                           className={`rounded-full border px-4 py-2 font-medium transition-colors ${
                             isComfortable ? "text-base" : "text-sm"
                           } ${
@@ -549,7 +663,10 @@ export default function Home() {
                     {isCompact && (
                       <button
                         type="button"
-                        onClick={() => handleGoDeeper(article.title)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGoDeeper(article.title);
+                        }}
                         className={`mt-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                           isDark
                             ? "border-[#ededed] bg-transparent text-[#ededed] hover:bg-[#ededed] hover:text-[#171717]"
