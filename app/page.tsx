@@ -316,10 +316,10 @@ export default function Home() {
                 onClick={cycleCardSize}
                 title={`Card size: ${cardSize.charAt(0).toUpperCase() + cardSize.slice(1)}`}
                 aria-label={`Card size: ${cardSize}`}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#a3a3a3] focus:ring-offset-2 ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 ${
                   isDark
-                    ? "text-[#a3a3a3] hover:text-[#ededed] focus:ring-offset-[#0a0a0a]"
-                    : "text-[#737373] hover:text-[#525252] focus:ring-offset-white"
+                    ? "text-[#a3a3a3] hover:text-[#ededed]"
+                    : "text-[#737373] hover:text-[#525252]"
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -333,10 +333,10 @@ export default function Home() {
                 onClick={toggleFeedView}
                 title={feedView === "card" ? "Switch to list view" : "Switch to card view"}
                 aria-label={feedView === "card" ? "Switch to list view" : "Switch to card view"}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#a3a3a3] focus:ring-offset-2 ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 ${
                   isDark
-                    ? "text-[#a3a3a3] hover:text-[#ededed] focus:ring-offset-[#0a0a0a]"
-                    : "text-[#737373] hover:text-[#525252] focus:ring-offset-white"
+                    ? "text-[#a3a3a3] hover:text-[#ededed]"
+                    : "text-[#737373] hover:text-[#525252]"
                 }`}
               >
                 {feedView === "card" ? (
@@ -363,10 +363,10 @@ export default function Home() {
                 disabled={feedLoading}
                 title="Refresh feed"
                 aria-label="Refresh feed"
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#a3a3a3] focus:ring-offset-2 disabled:opacity-50 ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 disabled:opacity-50 ${
                   isDark
-                    ? "text-[#a3a3a3] hover:text-[#ededed] focus:ring-offset-[#0a0a0a]"
-                    : "text-[#737373] hover:text-[#525252] focus:ring-offset-white"
+                    ? "text-[#a3a3a3] hover:text-[#ededed]"
+                    : "text-[#737373] hover:text-[#525252]"
                 }`}
               >
                 <svg
