@@ -5,28 +5,14 @@ import ReactMarkdown from "react-markdown";
 
 type FeedArticle = {
   title: string;
-  description: string;
+  newtonSummary: string;
   sourceName: string;
   publishedAt: string;
   url: string;
+  importance: number;
+  noc: string | null;
+  tag: string;
 };
-
-const IMPORTANCE_KEYWORDS = [
-  "breakthrough",
-  "first",
-  "major",
-  "launches",
-  "releases",
-  "critical",
-  "emergency",
-  "revolutionary",
-];
-
-function getImportanceScore(headline: string): number {
-  const lower = headline.toLowerCase();
-  const count = IMPORTANCE_KEYWORDS.filter((kw) => lower.includes(kw)).length;
-  return Math.min(5, Math.max(1, count + 1));
-}
 
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -277,7 +263,7 @@ export default function Home() {
             </button>
             <div className="px-6 py-6 pr-14 sm:px-8 sm:py-8 sm:pr-16">
               <span className={`mb-2 inline-block text-xs font-medium uppercase tracking-wider ${isDark ? "text-[#a3a3a3]" : "text-[#737373]"}`}>
-                {expandedArticle.sourceName}
+                {expandedArticle.tag}
               </span>
               <h2 id="modal-title" className={`mb-2 font-serif text-2xl font-normal leading-tight sm:text-3xl ${isDark ? "text-[#ededed]" : "text-[#171717]"}`}>
                 {expandedArticle.title}
@@ -286,12 +272,12 @@ export default function Home() {
                 <time className={`text-xs ${isDark ? "text-[#737373]" : "text-[#a3a3a3]"}`} dateTime={expandedArticle.publishedAt}>
                   {formatRelativeTime(expandedArticle.publishedAt)}
                 </time>
-                <div className="flex gap-0.5" aria-label={`Importance: ${getImportanceScore(expandedArticle.title)} of 5`}>
+                <div className="flex gap-0.5" aria-label={`Importance: ${expandedArticle.importance} of 5`}>
                   {[1, 2, 3, 4, 5].map((i) => (
                     <span
                       key={i}
                       className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                        i <= getImportanceScore(expandedArticle.title)
+                        i <= expandedArticle.importance
                           ? isDark
                             ? "bg-[#ededed]"
                             : "bg-[#171717]"
@@ -304,8 +290,20 @@ export default function Home() {
                 </div>
               </div>
               <p className={`mb-6 text-[15px] leading-relaxed ${isDark ? "text-[#a3a3a3]" : "text-[#525252]"}`}>
-                {expandedArticle.description}
+                {expandedArticle.newtonSummary}
               </p>
+              {expandedArticle.noc && (
+                <div
+                  className={`mb-6 rounded-lg border px-4 py-3.5 ${
+                    isDark ? "border-[#404040] bg-[#262626]" : "border-[#e5e0da] bg-[#f5f2ee]"
+                  }`}
+                >
+                  <p className={`text-[15px] leading-relaxed ${isDark ? "text-[#ededed]" : "text-[#171717]"}`}>
+                    <span className="font-semibold">⚡ NoC: </span>
+                    {expandedArticle.noc}
+                  </p>
+                </div>
+              )}
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
@@ -534,7 +532,6 @@ export default function Home() {
                 }`}
               >
                 {feedArticles.map((article, index) => {
-                  const importance = getImportanceScore(article.title);
                   const mutedCls = isDark ? "text-[#a3a3a3]" : "text-[#737373]";
                   const textCls = isDark ? "text-[#ededed]" : "text-[#171717]";
                   return (
@@ -547,7 +544,7 @@ export default function Home() {
                       }`}
                     >
                       <span className={`shrink-0 text-xs font-medium uppercase tracking-wider ${mutedCls}`} style={{ minWidth: "4.5rem" }}>
-                        {article.sourceName}
+                        {article.tag}
                       </span>
                       <span className={`min-w-0 flex-1 truncate font-serif text-sm ${textCls}`}>
                         {article.title}
@@ -557,7 +554,7 @@ export default function Home() {
                           <span
                             key={i}
                             className={`h-1 w-1 shrink-0 rounded-full ${
-                              i <= importance
+                              i <= article.importance
                                 ? isDark
                                   ? "bg-[#ededed]"
                                   : "bg-[#171717]"
@@ -576,7 +573,6 @@ export default function Home() {
             {!feedError &&
               feedView === "card" &&
               feedArticles.map((article, index) => {
-                const importance = getImportanceScore(article.title);
                 const mutedCls = isDark ? "text-[#a3a3a3]" : "text-[#737373]";
                 const textCls = isDark ? "text-[#ededed]" : "text-[#171717]";
                 const borderCls = isDark
@@ -584,6 +580,7 @@ export default function Home() {
                   : "border-[#e8e8e8] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]";
 
                 const isCompact = cardSize === "compact";
+                const importance = article.importance;
                 const isComfortable = cardSize === "comfortable";
 
                 return (
@@ -619,7 +616,7 @@ export default function Home() {
                       ))}
                     </div>
                     <span className={`inline-block text-xs font-medium uppercase tracking-wider ${mutedCls} ${isCompact ? "mb-1" : isComfortable ? "mb-4" : "mb-3"}`}>
-                      {article.sourceName}
+                      {article.tag}
                     </span>
                     <h2
                       className={`font-serif font-normal leading-tight ${textCls} ${
@@ -634,7 +631,7 @@ export default function Home() {
                     </h2>
                     {!isCompact && (
                       <p className={`leading-relaxed ${isDark ? "text-[#a3a3a3]" : "text-[#525252]"} ${isComfortable ? "mb-5 text-[17px]" : "mb-4 text-[15px]"}`}>
-                        {article.description}
+                        {article.newtonSummary}
                       </p>
                     )}
                     {!isCompact && (
