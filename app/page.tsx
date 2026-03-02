@@ -1,7 +1,31 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+
+type FeedArticle = {
+  title: string;
+  description: string;
+  sourceName: string;
+  publishedAt: string;
+  url: string;
+};
+
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
+}
 
 function getTextContent(children: React.ReactNode): string {
   if (typeof children === "string") return children;
@@ -49,7 +73,21 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activePanel, setActivePanel] = useState<Panel>("feed");
+  const [feedArticles, setFeedArticles] = useState<FeedArticle[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/feed")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load feed");
+        return res.json();
+      })
+      .then((data: FeedArticle[]) => setFeedArticles(data))
+      .catch((err) => setFeedError(err instanceof Error ? err.message : "Failed to load feed"))
+      .finally(() => setFeedLoading(false));
+  }, []);
 
   const scrollToPanel = useCallback((panel: Panel) => {
     const el = scrollRef.current;
@@ -177,77 +215,70 @@ export default function Home() {
           className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
         >
           <div className="flex w-full max-w-xl flex-col items-center gap-4 sm:gap-5">
-            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
-              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
-                Research
-              </span>
-              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
-                Multimodal models achieve human-level reasoning on science benchmarks
-              </h2>
-              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
-                A new evaluation framework reveals that frontier models now match expert human performance across physics, chemistry, and biology. The gap between AI and human scientific reasoning has narrowed significantly in the past year.
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleGoDeeper("Multimodal models achieve human-level reasoning on science benchmarks")}
-                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
-                >
-                  Go deeper with Newton
-                </button>
-                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-26">
-                  2 hours ago
-                </time>
+            {feedLoading && (
+              <div className="flex w-full items-center justify-center py-16">
+                <div className="flex items-center gap-2 text-[#737373]">
+                  <svg
+                    className="h-5 w-5 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-sm">Loading feed...</span>
+                </div>
               </div>
-            </article>
-
-            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
-              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
-                Industry
-              </span>
-              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
-                Major cloud providers announce unified AI inference pricing
-              </h2>
-              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
-                Three leading cloud platforms have aligned their pricing models for large language model inference, potentially lowering costs for enterprise deployments. Analysts expect the move to accelerate adoption of on-demand AI workloads.
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleGoDeeper("Major cloud providers announce unified AI inference pricing")}
-                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
+            )}
+            {feedError && !feedLoading && (
+              <p className="w-full py-8 text-center text-sm text-red-600">{feedError}</p>
+            )}
+            {!feedLoading && !feedError && feedArticles.length === 0 && (
+              <p className="w-full py-8 text-center text-sm text-[#737373]">No articles to show.</p>
+            )}
+            {!feedLoading &&
+              !feedError &&
+              feedArticles.map((article, index) => (
+                <article
+                  key={article.url || index}
+                  className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6"
                 >
-                  Go deeper with Newton
-                </button>
-                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-26">
-                  5 hours ago
-                </time>
-              </div>
-            </article>
-
-            <article className="w-full rounded-lg border border-[#e8e8e8] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6 sm:py-6">
-              <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
-                Breakthrough
-              </span>
-              <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
-                First AI system passes full medical licensing exam without fine-tuning
-              </h2>
-              <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
-                A zero-shot model achieved passing scores across all sections of a national medical board exam. The result suggests general-purpose models may soon assist in high-stakes clinical decision support without domain-specific training.
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleGoDeeper("First AI system passes full medical licensing exam without fine-tuning")}
-                  className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
-                >
-                  Go deeper with Newton
-                </button>
-                <time className="text-xs text-[#a3a3a3]" dateTime="2025-02-25">
-                  Yesterday
-                </time>
-              </div>
-            </article>
+                  <span className="mb-3 inline-block text-xs font-medium uppercase tracking-wider text-[#737373]">
+                    {article.sourceName}
+                  </span>
+                  <h2 className="mb-2 font-serif text-xl font-normal leading-tight text-[#171717] sm:text-2xl">
+                    {article.title}
+                  </h2>
+                  <p className="mb-4 text-[15px] leading-relaxed text-[#525252]">
+                    {article.description}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleGoDeeper(article.title)}
+                      className="rounded-full border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition-colors hover:bg-[#171717] hover:text-white"
+                    >
+                      Go deeper with Newton
+                    </button>
+                    <time className="text-xs text-[#a3a3a3]" dateTime={article.publishedAt}>
+                      {formatRelativeTime(article.publishedAt)}
+                    </time>
+                  </div>
+                </article>
+              ))}
           </div>
         </section>
 
