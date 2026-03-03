@@ -338,23 +338,49 @@ export default function Home() {
                   </p>
                 </div>
               )}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  type="button"
-                  onClick={() => handleGoDeeper(expandedArticle.title)}
-                  className={`w-fit rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                    isDark
-                      ? "border-[#ededed] bg-transparent text-[#ededed] hover:bg-[#ededed] hover:text-[#171717]"
-                      : "border-[#171717] bg-white text-[#171717] hover:bg-[#171717] hover:text-white"
-                  }`}
-                >
-                  Go deeper with Newton
-                </button>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      label: "What does this mean?",
+                      question: `Explain this story in simple terms and why it matters: "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
+                    },
+                    {
+                      label: "Non-Obvious Connection",
+                      question: `What is the non-obvious connection this story has to another field? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
+                    },
+                    {
+                      label: "What should I know?",
+                      question: `What key context and background do I need to fully understand this story? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
+                    },
+                    {
+                      label: "What happens next?",
+                      question: `What are the implications of this story and where does it lead? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
+                    },
+                  ].map(({ label, question }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setExpandedArticle(null);
+                        scrollToPanel("newton");
+                        submitQuery(question);
+                      }}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isDark
+                          ? "bg-[#262626] text-[#ededed] hover:bg-[#404040]"
+                          : "bg-[#e5e5e5] text-[#171717] hover:bg-[#d4d4d4]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <a
                   href={expandedArticle.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  className={`inline-flex w-fit items-center gap-1.5 text-sm font-medium transition-colors ${
                     isDark ? "text-[#a3a3a3] hover:text-[#ededed]" : "text-[#525252] hover:text-[#171717]"
                   }`}
                 >
