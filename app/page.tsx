@@ -116,7 +116,10 @@ export default function Home() {
   const [feedView, setFeedView] = useState<FeedView>("card");
   const [feedSort, setFeedSort] = useState<FeedSort>("importance");
   const [expandedArticle, setExpandedArticle] = useState<FeedArticle | null>(null);
+  const [newStories, setNewStories] = useState<FeedArticle[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const feedArticlesRef = useRef<FeedArticle[]>([]);
+  feedArticlesRef.current = feedArticles;
 
   const sortedArticles = useMemo(() => {
     const arr = [...feedArticles];
@@ -183,9 +186,37 @@ export default function Home() {
           return true;
         });
         setFeedArticles(deduped);
+        setNewStories([]);
       })
       .catch((err) => setFeedError(err instanceof Error ? err.message : "Failed to load feed"))
       .finally(() => setFeedLoading(false));
+  }, []);
+
+  const fetchFeedSilently = useCallback(() => {
+    fetch("/api/feed")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load feed");
+        return res.json();
+      })
+      .then((data: FeedArticle[]) => {
+        const seen = new Set<string>();
+        const deduped = data.filter((a) => {
+          const key = a.title.trim().toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        const currentTitles = new Set(feedArticlesRef.current.map((a) => a.title.trim().toLowerCase()));
+        const fresh = deduped.filter((a) => !currentTitles.has(a.title.trim().toLowerCase()));
+        if (fresh.length > 0) {
+          setNewStories((prev) => {
+            const prevTitles = new Set(prev.map((a) => a.title.trim().toLowerCase()));
+            const brandNew = fresh.filter((a) => !prevTitles.has(a.title.trim().toLowerCase()));
+            return [...brandNew, ...prev];
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -193,9 +224,9 @@ export default function Home() {
   }, [fetchFeed]);
 
   useEffect(() => {
-    const interval = setInterval(fetchFeed, 10 * 60 * 1000);
+    const interval = setInterval(fetchFeedSilently, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchFeed]);
+  }, [fetchFeedSilently]);
 
   function toggleTheme() {
     const next = !isDark;
@@ -606,6 +637,22 @@ export default function Home() {
                 </svg>
               </button>
             </div>
+            {newStories.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedArticles((prev) => [...newStories, ...prev]);
+                  setNewStories([]);
+                }}
+                className={`w-full rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                  isDark
+                    ? "bg-[#262626] text-[#a3a3a3] hover:bg-[#404040] hover:text-[#ededed]"
+                    : "bg-[#e8e8e8] text-[#525252] hover:bg-[#d4d4d4] hover:text-[#171717]"
+                }`}
+              >
+                ↑ {newStories.length} new {newStories.length === 1 ? "story" : "stories"}
+              </button>
+            )}
             {feedLoading && feedArticles.length === 0 && (
               <div className="flex w-full items-center justify-center py-16">
                 <div className={`flex items-center gap-2 ${isDark ? "text-[#a3a3a3]" : "text-[#737373]"}`}>
@@ -765,7 +812,7 @@ export default function Home() {
                               : "border-[#171717] bg-white text-[#171717] hover:bg-[#171717] hover:text-white"
                           }`}
                         >
-                          Go deeper with Newton
+                          Ask Newton
                         </button>
                         <div className="flex items-center gap-2">
                           <time className={`text-xs ${isDark ? "text-[#737373]" : "text-[#a3a3a3]"}`} dateTime={article.publishedAt}>
@@ -799,7 +846,7 @@ export default function Home() {
                               : "border-[#171717] bg-white text-[#171717] hover:bg-[#171717] hover:text-white"
                           }`}
                         >
-                          Go deeper with Newton
+                          Ask Newton
                         </button>
                         <div className="flex items-center gap-2">
                           <time className={`text-xs ${isDark ? "text-[#737373]" : "text-[#a3a3a3]"}`} dateTime={article.publishedAt}>
