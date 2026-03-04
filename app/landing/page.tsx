@@ -27,9 +27,17 @@ type AmbientChar = {
   char: string;
   x: number;
   y: number;
-  delay: number;
-  duration: number;
+  fadeDelay: number;
+  fadeDuration: number;
+  driftX: number;
+  driftY: number;
+  driftDuration: number;
+  driftDelay: number;
 };
+
+function pickRandomChar() {
+  return AMBIENT_CHARS[Math.floor(Math.random() * AMBIENT_CHARS.length)];
+}
 
 export default function LandingPage() {
   const [isDark, setIsDark] = useState(false);
@@ -45,16 +53,39 @@ export default function LandingPage() {
     const w = typeof window !== "undefined" ? window.innerWidth : 1200;
     const h = typeof window !== "undefined" ? window.innerHeight : 800;
     for (let i = 0; i < AMBIENT_COUNT; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const driftDistance = 60 + Math.random() * 120;
+      const driftDuration = 20 + Math.random() * 40;
       chars.push({
-        char: AMBIENT_CHARS[Math.floor(Math.random() * AMBIENT_CHARS.length)],
+        char: pickRandomChar(),
         x: Math.random() * w,
         y: Math.random() * h,
-        delay: Math.random() * 8,
-        duration: 4 + Math.random() * 8,
+        fadeDelay: Math.random() * 6,
+        fadeDuration: 4 + Math.random() * 8,
+        driftX: Math.cos(angle) * driftDistance,
+        driftY: Math.sin(angle) * driftDistance,
+        driftDuration,
+        driftDelay: Math.random() * driftDuration * 0.3,
       });
     }
     setAmbientChars(chars);
   }, []);
+
+  useEffect(() => {
+    if (ambientChars.length === 0) return;
+    const interval = setInterval(() => {
+      setAmbientChars((prev) => {
+        const next = [...prev];
+        const count = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) {
+          const idx = Math.floor(Math.random() * next.length);
+          next[idx] = { ...next[idx], char: pickRandomChar() };
+        }
+        return next;
+      });
+    }, 4000 + Math.random() * 2000);
+    return () => clearInterval(interval);
+  }, [ambientChars.length]);
 
   function toggleTheme() {
     const next = !isDark;
@@ -73,7 +104,7 @@ export default function LandingPage() {
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
         aria-hidden
       >
-        {ambientChars.map(({ char, x, y, delay, duration }, i) => (
+        {ambientChars.map(({ char, x, y, fadeDelay, fadeDuration, driftX, driftY, driftDuration, driftDelay }, i) => (
           <span
             key={i}
             className={`absolute font-mono text-[10px] select-none ${
@@ -82,8 +113,10 @@ export default function LandingPage() {
             style={{
               left: x,
               top: y,
-              animation: `ambient-char-fade-${isDark ? "dark" : "light"} ${duration}s ease-in-out ${delay}s infinite`,
-            }}
+              "--drift-x": `${driftX}px`,
+              "--drift-y": `${driftY}px`,
+              animation: `ambient-char-drift ${driftDuration}s linear ${driftDelay}s infinite alternate, ambient-char-fade-${isDark ? "dark" : "light"} ${fadeDuration}s ease-in-out ${fadeDelay}s infinite`,
+            } as React.CSSProperties}
           >
             {char}
           </span>

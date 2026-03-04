@@ -58,3 +58,12 @@ body {
     opacity: 0.05;
   }
 }
+
+@keyframes ambient-char-drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(var(--drift-x, 0), var(--drift-y, 0));
+  }
+}
