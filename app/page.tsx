@@ -10,8 +10,9 @@ type FeedArticle = {
   sourceName: string;
   publishedAt: string;
   url: string;
+  urlToImage?: string | null;
   importance: number;
-  noc: string | null;
+  newtonsInsight: string | null;
   tag: string;
 };
 
@@ -68,12 +69,12 @@ function ResponseContent({ content, isDark }: { content: string; isDark: boolean
       components={{
         p: ({ children }) => {
           const text = getTextContent(children);
-          if (text.trimStart().startsWith("⚡ NoC")) {
+          const isInsight = text.trimStart().startsWith("Newton's Insight") || text.trimStart().startsWith("⚡ NoC") || text.trimStart().toLowerCase().includes("newton's insight");
+          if (isInsight) {
             return (
-              <div className={`mt-4 rounded-lg px-4 py-3.5 first:mt-0 ${highlightCls}`}>
-                <p className={`text-sm leading-relaxed [&>strong]:font-bold ${textCls}`}>
-                  {children}
-                </p>
+              <div className={`mt-4 rounded-lg border-l-2 pl-4 py-3 first:mt-0 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`} style={{ marginBottom: "0.25rem" }}>NEWTON'S INSIGHT</p>
+                <p className={`text-sm leading-relaxed italic ${textCls}`}>{children}</p>
               </div>
             );
           }
@@ -303,7 +304,7 @@ export default function Home() {
 
   function handleGoDeeper(headline: string) {
     scrollToPanel("newton");
-    const question = `Tell me more about ${headline} — and what's the non-obvious connection here?`;
+    const question = `Tell me more about ${headline} — and what's Newton's insight here?`;
     setMessage(question);
     submitQuery(question);
   }
@@ -353,6 +354,15 @@ export default function Home() {
             }`}
             onClick={(e) => e.stopPropagation()}
           >
+            {expandedArticle.urlToImage && (
+              <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
+                <img
+                  src={expandedArticle.urlToImage}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setExpandedArticle(null)}
@@ -397,15 +407,11 @@ export default function Home() {
               <p className={`mb-6 text-sm leading-relaxed ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                 {expandedArticle.newtonSummary}
               </p>
-              {expandedArticle.noc && (
-                <div
-                  className={`mb-6 rounded-lg px-4 py-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${
-                    isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff]"
-                  }`}
-                >
-                  <p className={`text-sm leading-relaxed ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
-                    <span className="font-semibold">⚡ NoC: </span>
-                    {expandedArticle.noc}
+              {expandedArticle.newtonsInsight && (
+                <div className={`mb-6 rounded-r border-l-2 pl-4 py-3 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                  <p className={`text-[10px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`}>NEWTON'S INSIGHT</p>
+                  <p className={`mt-1 text-sm leading-relaxed italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
+                    {expandedArticle.newtonsInsight}
                   </p>
                 </div>
               )}
@@ -417,8 +423,8 @@ export default function Home() {
                       question: `Explain this story in simple terms and why it matters: "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
                     },
                     {
-                      label: "Non-Obvious Connection",
-                      question: `What is the non-obvious connection this story has to another field? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
+                      label: "Newton's Insight",
+                      question: `What is Newton's insight — the connection between this story and something from a different field? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
                     },
                     {
                       label: "What should I know?",
@@ -850,10 +856,20 @@ export default function Home() {
                       tabIndex={0}
                       onClick={() => setExpandedArticle(article)}
                       onKeyDown={(e) => e.key === "Enter" && setExpandedArticle(article)}
-                      className={`relative w-full cursor-pointer rounded-lg transition-shadow shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)] ${
+                      className={`relative w-full cursor-pointer overflow-hidden rounded-lg transition-shadow shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)] ${
                         isDark ? "bg-[#1c1c1b] hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]" : "bg-[#ffffff]"
-                      } ${isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}`}
+                      }`}
                     >
+                      {article.urlToImage && (
+                        <div className="h-40 w-full overflow-hidden rounded-t-lg">
+                          <img
+                            src={article.urlToImage}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className={isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}>
                       {/* Top line: tag, importance dots, timestamp, source */}
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className={`text-xs font-medium uppercase tracking-[0.12em] ${tagCls}`}>
@@ -924,6 +940,7 @@ export default function Home() {
                         >
                           Ask Newton
                         </button>
+                      </div>
                       </div>
                     </article>
                   );

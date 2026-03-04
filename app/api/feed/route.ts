@@ -11,6 +11,7 @@ type RawArticle = {
   sourceName: string;
   publishedAt: string;
   url: string;
+  urlToImage?: string | null;
   importanceHint?: string;
 };
 
@@ -21,15 +22,16 @@ type EnrichedArticle = {
   sourceName: string;
   publishedAt: string;
   url: string;
+  urlToImage?: string | null;
   importance: number;
-  noc: string | null;
+  newtonsInsight: string | null;
   tag: string;
 };
 
 type ClaudeEnrichment = {
   newtonSummary?: string;
   importance?: number;
-  noc?: string | null;
+  newtonsInsight?: string | null;
   tag?: string;
 };
 
@@ -39,7 +41,7 @@ const ENRICHMENT_SYSTEM =
 const ENRICHMENT_USER_TEMPLATE = `Enrich this article for the Newton feed. Return a JSON object with these fields:
 - newtonSummary: a 2-3 sentence summary in Newton's voice — clear, intelligent, no jargon, written for a curious non-expert
 - importance: a number 1-5 (integer) based on genuine significance to science and technology — must be a number, not a string
-- noc: one sentence describing a non-obvious connection this story has to another field — only include if genuinely interesting, otherwise return null
+- newtonsInsight: one sentence describing Newton's insight — a connection between this story and something from a different field that most people wouldn't put together. Only include if genuinely interesting, otherwise return null
 - tag: one word category tag like "AI", "Space", "Biotech", "Physics", "Climate"
 
 Article title: {title}
@@ -102,14 +104,18 @@ async function enrichArticle(article: RawArticle, anthropicKey: string): Promise
       typeof parsed.newtonSummary === "string" && parsed.newtonSummary.trim()
         ? parsed.newtonSummary.trim()
         : article.description;
-    const noc = typeof parsed.noc === "string" && parsed.noc.trim() ? parsed.noc.trim() : null;
+    const newtonsInsight = (typeof parsed.newtonsInsight === "string" && parsed.newtonsInsight.trim()
+      ? parsed.newtonsInsight.trim()
+      : typeof (parsed as { noc?: string }).noc === "string" && (parsed as { noc?: string }).noc?.trim()
+        ? (parsed as { noc?: string }).noc!.trim()
+        : null);
     const tag = typeof parsed.tag === "string" && parsed.tag.trim() ? parsed.tag.trim() : "Science";
 
     return {
       ...article,
       newtonSummary,
       importance,
-      noc,
+      newtonsInsight,
       tag,
       source: article.source,
       sourceName: article.sourceName,
@@ -120,7 +126,7 @@ async function enrichArticle(article: RawArticle, anthropicKey: string): Promise
       ...article,
       newtonSummary: article.description,
       importance: 3,
-      noc: null,
+      newtonsInsight: null,
       tag: article.sourceName,
       source: article.source,
       sourceName: article.sourceName,
@@ -151,6 +157,7 @@ async function fetchNewsApi(newsApiKey: string): Promise<RawArticle[]> {
       description?: string | null;
       source?: { name?: string | null };
       url?: string | null;
+      urlToImage?: string | null;
       publishedAt?: string | null;
     }>;
     message?: string;
@@ -162,14 +169,22 @@ async function fetchNewsApi(newsApiKey: string): Promise<RawArticle[]> {
 
   return (data.articles ?? [])
     .filter((a) => Boolean(a.description?.trim()))
-    .map((a) => ({
-      title: (a.title ?? "").trim(),
-      description: (a.description ?? "").trim(),
-      source: "news" as const,
-      sourceName: (a.source?.name ?? "News").trim() || "News",
-      publishedAt: a.publishedAt ?? new Date().toISOString(),
-      url: a.url ?? "",
-    }))
+    .map((a) => {
+      let sourceName = "News";
+      if (a.source && typeof a.source === "object" && typeof (a.source as { name?: string }).name === "string") {
+        const name = ((a.source as { name?: string }).name ?? "").trim();
+        if (name) sourceName = name;
+      }
+      return {
+        title: (a.title ?? "").trim(),
+        description: (a.description ?? "").trim(),
+        source: "news" as const,
+        sourceName,
+        publishedAt: a.publishedAt ?? new Date().toISOString(),
+        url: a.url ?? "",
+        urlToImage: a.urlToImage ?? null,
+      };
+    })
     .filter((a) => a.title && a.url);
 }
 
