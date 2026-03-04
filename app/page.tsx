@@ -252,10 +252,6 @@ export default function Home() {
   }
 
   const scrollToPanel = useCallback((panel: Panel) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const index = panel === "feed" ? 0 : 1;
-    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
     setActivePanel(panel);
   }, []);
 
@@ -569,17 +565,18 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Swipeable panel container */}
+      {/* Tab panel container */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory scroll-smooth px-4 pb-12 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-1 flex-col overflow-y-auto px-4 pb-12 sm:px-6"
       >
         {/* Panel 1: Feed */}
+        {activePanel === "feed" && (
         <section
           role="tabpanel"
           aria-label="Feed"
-          className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
+          className="flex w-full flex-col items-center pb-8"
         >
           <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-3 sm:gap-4">
             <div className="flex w-full items-center justify-end gap-0.5">
@@ -947,12 +944,14 @@ export default function Home() {
             )}
           </div>
         </section>
+        )}
 
         {/* Panel 2: Newton (search + response) */}
+        {activePanel === "newton" && (
         <section
           role="tabpanel"
           aria-label="Newton"
-          className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
+          className="flex w-full flex-col items-center pb-8"
         >
           <div className="mx-auto flex w-full max-w-[680px] flex-col items-center">
             <form onSubmit={handleSubmit} className="relative mb-10 w-full sm:mb-12">
@@ -1028,6 +1027,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        )}
       </div>
     </div>
   );
