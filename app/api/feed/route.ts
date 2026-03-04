@@ -134,11 +134,20 @@ async function enrichArticle(article: RawArticle, anthropicKey: string): Promise
   }
 }
 
+function normalizeTitleForDedup(title: string): string {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "") // remove punctuation, keep letters and numbers
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function deduplicateByTitle(articles: RawArticle[]): RawArticle[] {
   const seen = new Set<string>();
   return articles.filter((a) => {
-    const key = a.title.trim().toLowerCase();
-    if (seen.has(key)) return false;
+    const key = normalizeTitleForDedup(a.title);
+    if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
@@ -356,7 +365,12 @@ export async function GET() {
 
     const deduped = deduplicateByTitle(allRaw);
 
-    const enriched = await Promise.all(deduped.map((a) => enrichArticle(a, anthropicKey)));
+    const withEnoughDescription = deduped.filter((a) => {
+      const desc = a.description?.trim() ?? "";
+      return desc.length >= 50;
+    });
+
+    const enriched = await Promise.all(withEnoughDescription.map((a) => enrichArticle(a, anthropicKey)));
 
     enriched.sort((a, b) => b.importance - a.importance);
 

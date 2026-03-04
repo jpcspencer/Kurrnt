@@ -423,10 +423,6 @@ export default function Home() {
                       question: `Explain this story in simple terms and why it matters: "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
                     },
                     {
-                      label: "Newton's Insight",
-                      question: `What is Newton's insight — the connection between this story and something from a different field? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
-                    },
-                    {
                       label: "What should I know?",
                       question: `What key context and background do I need to fully understand this story? "${expandedArticle.title}" — ${expandedArticle.newtonSummary}`,
                     },
@@ -925,22 +921,24 @@ export default function Home() {
                           {article.newtonSummary}
                         </p>
                       )}
-                      <div className={`flex items-center justify-between gap-2 ${isComfortable ? "mt-2" : ""}`}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleGoDeeper(article.title);
-                          }}
-                          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                            isDark
-                              ? "border-[#3a3a39] bg-transparent text-[#edebe8] hover:bg-[#2a2a29]"
-                              : "border-[#d4d4d4] bg-transparent text-[#1a1a1a] hover:bg-[#f5f5f4]"
-                          }`}
-                        >
-                          Ask Newton
-                        </button>
-                      </div>
+                      {!isCompact && (
+                        <div className={`flex items-center justify-between gap-2 ${isComfortable ? "mt-2" : ""}`}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGoDeeper(article.title);
+                            }}
+                            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                              isDark
+                                ? "border-[#3a3a39] bg-transparent text-[#edebe8] hover:bg-[#2a2a29]"
+                                : "border-[#d4d4d4] bg-transparent text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                            }`}
+                          >
+                            Ask Newton
+                          </button>
+                        </div>
+                      )}
                       </div>
                     </article>
                   );
