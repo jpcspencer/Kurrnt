@@ -515,9 +515,8 @@ export default function Home() {
         )}
       </button>
 
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-4">
-      <header className="flex shrink-0 flex-col items-center pt-10 pb-5 sm:pb-6">
-        <div className="w-full">
+      <header className="flex shrink-0 flex-col items-center px-4 pt-10 pb-5 sm:px-6 sm:pb-6">
+        <div className="mx-auto w-full max-w-[680px]">
         {/* Logo */}
         <h1
           className={`mb-4 font-serif text-3xl font-normal tracking-tight sm:mb-5 sm:text-4xl ${
@@ -574,7 +573,7 @@ export default function Home() {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory scroll-smooth pb-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory scroll-smooth px-4 pb-12 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {/* Panel 1: Feed */}
         <section
@@ -582,7 +581,7 @@ export default function Home() {
           aria-label="Feed"
           className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
         >
-          <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
+          <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-3 sm:gap-4">
             <div className="flex w-full items-center justify-end gap-0.5">
               <div className="relative" ref={sortDropdownRef}>
                 <button
@@ -955,7 +954,7 @@ export default function Home() {
           aria-label="Newton"
           className="flex min-w-full shrink-0 snap-start snap-always flex-col items-center pb-8"
         >
-          <div className="flex w-full flex-col items-center">
+          <div className="mx-auto flex w-full max-w-[680px] flex-col items-center">
             <form onSubmit={handleSubmit} className="relative mb-10 w-full sm:mb-12">
               <input
                 type="text"
@@ -1029,7 +1028,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </div>
       </div>
     </div>
   );
