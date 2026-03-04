@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
 type FeedArticle = {
@@ -498,7 +499,12 @@ export default function FeedPage() {
             isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
           }`}
         >
-          Newton
+          <Link
+            href="/"
+            className="cursor-pointer no-underline transition-opacity hover:opacity-80"
+          >
+            Newton
+          </Link>
         </h1>
 
         <div
