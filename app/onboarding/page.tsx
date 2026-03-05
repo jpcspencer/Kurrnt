@@ -4,22 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { INTERESTS } from "@/lib/interests";
 
 const THEME_STORAGE_KEY = "kurrnt-theme";
 const INTERESTS_COOKIE = "kurrnt-interests";
-
-const INTERESTS = [
-  "AI",
-  "Robotics",
-  "Space",
-  "Biotech",
-  "Physics",
-  "Climate Tech",
-  "Neuroscience",
-  "Quantum Computing",
-  "Cybersecurity",
-  "Mathematics",
-] as const;
 
 function setInterestsCookie(interests: string[]) {
   if (typeof document === "undefined") return;

@@ -2,7 +2,11 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { createClient } from "@/lib/supabase";
+import { INTERESTS } from "@/lib/interests";
+import type { User } from "@supabase/supabase-js";
 
 type FeedArticle = {
   title: string;
@@ -102,6 +106,12 @@ const THEME_STORAGE_KEY = "kurrnt-theme";
 const CARD_SIZE_ORDER: CardSize[] = ["compact", "default", "comfortable"];
 
 export default function FeedPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profilePanel, setProfilePanel] = useState<"main" | "edit">("main");
+  const [editInterests, setEditInterests] = useState<Set<string>>(new Set());
+  const [interestsSaving, setInterestsSaving] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState<string | null>(null);
@@ -120,6 +130,7 @@ export default function FeedPage() {
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const feedArticlesRef = useRef<FeedArticle[]>([]);
   feedArticlesRef.current = feedArticles;
 
@@ -156,6 +167,34 @@ export default function FeedPage() {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     setIsDark(stored === "dark");
   }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      const interests = (session?.user?.user_metadata?.interests as string[] | undefined) ?? [];
+      setEditInterests(new Set(interests));
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      const interests = (session?.user?.user_metadata?.interests as string[] | undefined) ?? [];
+      setEditInterests(new Set(interests));
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+        setProfilePanel("main");
+      }
+    };
+    if (profileOpen) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [profileOpen]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -246,6 +285,38 @@ export default function FeedPage() {
     const next = !isDark;
     setIsDark(next);
     localStorage.setItem(THEME_STORAGE_KEY, next ? "dark" : "light");
+  }
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setProfileOpen(false);
+    setProfilePanel("main");
+    router.replace("/");
+  }
+
+  function toggleEditInterest(topic: string) {
+    setEditInterests((prev) => {
+      const next = new Set(prev);
+      if (next.has(topic)) next.delete(topic);
+      else next.add(topic);
+      return next;
+    });
+  }
+
+  async function handleSaveInterests() {
+    if (editInterests.size < 3) return;
+    setInterestsSaving(true);
+    const supabase = createClient();
+    await supabase.auth.updateUser({ data: { interests: Array.from(editInterests) } });
+    setInterestsSaving(false);
+    setProfilePanel("main");
+  }
+
+  function getInitial(email: string | undefined): string {
+    if (!email) return "?";
+    const m = email.match(/^([^@])/);
+    return (m?.[1] ?? "?").toUpperCase();
   }
 
   const scrollToPanel = useCallback((panel: Panel) => {
@@ -471,26 +542,165 @@ export default function FeedPage() {
         </button>
       )}
 
-      <button
-        type="button"
-        onClick={toggleTheme}
-        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-        className={`fixed right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-0 ${
-          isDark
-            ? "text-[#888886] hover:text-[#edebe8]"
-            : "text-[#6b6b6b] hover:text-[#1a1a1a]"
-        }`}
-      >
-        {isDark ? (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
-            <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
-            <path fillRule="evenodd" d="M9.528 1.718a.75.75 0 0 1 .162.819A8.97 8.97 0 0 0 9 6a9 9 0 0 0 9 9 8.97 8.97 0 0 0 3.463-.69.75.75 0 0 1 .981.98 10.503 10.503 0 0 1-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 0 1 .818.162Z" clipRule="evenodd" />
-          </svg>
-        )}
-      </button>
+      <div className="fixed right-4 top-4 z-10 flex items-center gap-2">
+        <div className="relative" ref={profileRef}>
+          {user ? (
+            <button
+              type="button"
+              onClick={() => setProfileOpen((o) => !o)}
+              aria-label="Profile"
+              aria-expanded={profileOpen}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-0 ${
+                isDark ? "ring-1 ring-[#3a3a39]" : "ring-1 ring-[#d4d4d4]"
+              }`}
+            >
+              {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                <img
+                  src={user.user_metadata.avatar_url ?? user.user_metadata.picture}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span
+                  className={`text-xs font-medium ${
+                    isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
+                  }`}
+                >
+                  {getInitial(user.email)}
+                </span>
+              )}
+            </button>
+          ) : (
+            <Link
+              href="/onboarding"
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                isDark
+                  ? "text-[#888886] hover:text-[#edebe8]"
+                  : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+              }`}
+            >
+              Sign in
+            </Link>
+          )}
+          {profileOpen && user && (
+            <div
+              className={`absolute right-0 top-full z-20 mt-2 min-w-[220px] rounded-lg py-2 shadow-[0_4px_16px_rgba(0,0,0,0.12)] ${
+                isDark
+                  ? "border border-[#2a2a29] bg-[#1c1c1b]"
+                  : "border border-[#e5e4e2] bg-[#ffffff] shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
+              }`}
+            >
+              {profilePanel === "main" ? (
+                <>
+                  <div className={`border-b px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
+                    <p className={`truncate text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                      {user.email}
+                    </p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => setProfilePanel("edit")}
+                      className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
+                        isDark
+                          ? "text-[#edebe8] hover:bg-[#252524]"
+                          : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                      }`}
+                    >
+                      Edit interests
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
+                        isDark
+                          ? "text-[#edebe8] hover:bg-[#252524]"
+                          : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                      }`}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className={`max-h-[280px] overflow-y-auto px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
+                  <p className={`mb-3 text-xs font-medium ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                    Select at least 3 topics
+                  </p>
+                  <div className="mb-4 flex flex-wrap gap-1.5">
+                    {INTERESTS.map((topic) => {
+                      const selected = editInterests.has(topic);
+                      return (
+                        <button
+                          key={topic}
+                          type="button"
+                          onClick={() => toggleEditInterest(topic)}
+                          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                            selected
+                              ? isDark
+                                ? "bg-white text-[#111110]"
+                                : "bg-[#1a1a1a] text-white"
+                              : isDark
+                                ? "border border-[#3a3a39] text-[#edebe8] hover:bg-[#252524]"
+                                : "border border-[#d4d4d4] text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                          }`}
+                        >
+                          {topic}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProfilePanel("main")}
+                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isDark
+                          ? "text-[#888886] hover:text-[#edebe8]"
+                          : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveInterests}
+                      disabled={editInterests.size < 3 || interestsSaving}
+                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                        isDark
+                          ? "bg-white text-[#111110] hover:opacity-90"
+                          : "bg-[#1a1a1a] text-white hover:opacity-90"
+                      }`}
+                    >
+                      {interestsSaving ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-0 ${
+            isDark
+              ? "text-[#888886] hover:text-[#edebe8]"
+              : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+          }`}
+        >
+          {isDark ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+              <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+              <path fillRule="evenodd" d="M9.528 1.718a.75.75 0 0 1 .162.819A8.97 8.97 0 0 0 9 6a9 9 0 0 0 9 9 8.97 8.97 0 0 0 3.463-.69.75.75 0 0 1 .981.98 10.503 10.503 0 0 1-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 0 1 .818.162Z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       <header className="flex shrink-0 flex-col items-center px-4 pt-10 pb-5 sm:px-6 sm:pb-6">
         <div className="mx-auto w-full max-w-[680px]">
