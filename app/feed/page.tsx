@@ -109,7 +109,8 @@ export default function FeedPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [profilePanel, setProfilePanel] = useState<"main" | "edit">("main");
+  const [editInterestsModalOpen, setEditInterestsModalOpen] = useState(false);
+  const [modalInterests, setModalInterests] = useState<Set<string>>(new Set());
   const [editInterests, setEditInterests] = useState<Set<string>>(new Set());
   const [interestsSaving, setInterestsSaving] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -187,7 +188,6 @@ export default function FeedPage() {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
-        setProfilePanel("main");
       }
     };
     if (profileOpen) {
@@ -198,9 +198,12 @@ export default function FeedPage() {
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setExpandedArticle(null);
+      if (e.key === "Escape") {
+        if (editInterestsModalOpen) setEditInterestsModalOpen(false);
+        else setExpandedArticle(null);
+      }
     };
-    if (expandedArticle) {
+    if (expandedArticle || editInterestsModalOpen) {
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
     }
@@ -208,7 +211,7 @@ export default function FeedPage() {
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "";
     };
-  }, [expandedArticle]);
+  }, [expandedArticle, editInterestsModalOpen]);
 
   const fetchFeed = useCallback(() => {
     setFeedLoading(true);
@@ -291,12 +294,11 @@ export default function FeedPage() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setProfileOpen(false);
-    setProfilePanel("main");
     router.replace("/");
   }
 
-  function toggleEditInterest(topic: string) {
-    setEditInterests((prev) => {
+  function toggleModalInterest(topic: string) {
+    setModalInterests((prev) => {
       const next = new Set(prev);
       if (next.has(topic)) next.delete(topic);
       else next.add(topic);
@@ -304,13 +306,21 @@ export default function FeedPage() {
     });
   }
 
+  function openEditInterestsModal() {
+    const interests = (user?.user_metadata?.interests as string[] | undefined) ?? [];
+    setModalInterests(new Set(interests));
+    setProfileOpen(false);
+    setEditInterestsModalOpen(true);
+  }
+
   async function handleSaveInterests() {
-    if (editInterests.size < 3) return;
+    if (modalInterests.size < 3) return;
     setInterestsSaving(true);
     const supabase = createClient();
-    await supabase.auth.updateUser({ data: { interests: Array.from(editInterests) } });
+    await supabase.auth.updateUser({ data: { interests: Array.from(modalInterests) } });
+    setEditInterests(new Set(modalInterests));
     setInterestsSaving(false);
-    setProfilePanel("main");
+    setEditInterestsModalOpen(false);
   }
 
   function getInitial(email: string | undefined): string {
@@ -525,6 +535,100 @@ export default function FeedPage() {
         </div>
       )}
 
+      {/* Edit interests modal */}
+      {editInterestsModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-interests-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/50 animate-[overlay-fade-in_0.15s_ease-out]"
+            onClick={() => setEditInterestsModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className={`relative w-full max-w-md overflow-hidden rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.12)] animate-[modal-fade-in_0.2s_ease-out] ${
+              isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff] shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b px-6 py-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+              <h2 id="edit-interests-title" className={`font-serif text-lg font-medium ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
+                Update your interests
+              </h2>
+              <button
+                type="button"
+                onClick={() => setEditInterestsModalOpen(false)}
+                aria-label="Close"
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
+                  isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-6">
+              <p className={`mb-4 text-sm ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                Select at least 3 topics
+              </p>
+              <div className="mb-6 flex flex-wrap gap-2">
+                {INTERESTS.map((topic) => {
+                  const selected = modalInterests.has(topic);
+                  return (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => toggleModalInterest(topic)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                        selected
+                          ? isDark
+                            ? "bg-white text-[#111110]"
+                            : "bg-[#1a1a1a] text-white"
+                          : isDark
+                            ? "border border-[#3a3a39] text-[#edebe8] hover:bg-[#252524]"
+                            : "border border-[#d4d4d4] text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                      }`}
+                    >
+                      {topic}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditInterestsModalOpen(false)}
+                  className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
+                    isDark
+                      ? "text-[#888886] hover:text-[#edebe8]"
+                      : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveInterests}
+                  disabled={modalInterests.size < 3 || interestsSaving}
+                  className={`rounded px-6 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                    isDark
+                      ? "bg-white text-[#111110] hover:opacity-90"
+                      : "bg-[#1a1a1a] text-white hover:opacity-90"
+                  }`}
+                >
+                  {interestsSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showBackToTop && (
         <button
           type="button"
@@ -590,93 +694,35 @@ export default function FeedPage() {
                   : "border border-[#e5e4e2] bg-[#ffffff] shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
               }`}
             >
-              {profilePanel === "main" ? (
-                <>
-                  <div className={`border-b px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
-                    <p className={`truncate text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
-                      {user.email}
-                    </p>
-                  </div>
-                  <div className="py-1">
-                    <button
-                      type="button"
-                      onClick={() => setProfilePanel("edit")}
-                      className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
-                        isDark
-                          ? "text-[#edebe8] hover:bg-[#252524]"
-                          : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
-                      }`}
-                    >
-                      Edit interests
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
-                        isDark
-                          ? "text-[#edebe8] hover:bg-[#252524]"
-                          : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
-                      }`}
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className={`max-h-[280px] overflow-y-auto px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
-                  <p className={`mb-3 text-xs font-medium ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
-                    Select at least 3 topics
-                  </p>
-                  <div className="mb-4 flex flex-wrap gap-1.5">
-                    {INTERESTS.map((topic) => {
-                      const selected = editInterests.has(topic);
-                      return (
-                        <button
-                          key={topic}
-                          type="button"
-                          onClick={() => toggleEditInterest(topic)}
-                          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                            selected
-                              ? isDark
-                                ? "bg-white text-[#111110]"
-                                : "bg-[#1a1a1a] text-white"
-                              : isDark
-                                ? "border border-[#3a3a39] text-[#edebe8] hover:bg-[#252524]"
-                                : "border border-[#d4d4d4] text-[#1a1a1a] hover:bg-[#f5f5f4]"
-                          }`}
-                        >
-                          {topic}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setProfilePanel("main")}
-                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                        isDark
-                          ? "text-[#888886] hover:text-[#edebe8]"
-                          : "text-[#6b6b6b] hover:text-[#1a1a1a]"
-                      }`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveInterests}
-                      disabled={editInterests.size < 3 || interestsSaving}
-                      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                        isDark
-                          ? "bg-white text-[#111110] hover:opacity-90"
-                          : "bg-[#1a1a1a] text-white hover:opacity-90"
-                      }`}
-                    >
-                      {interestsSaving ? "Saving…" : "Save"}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div className={`border-b px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
+                <p className={`truncate text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                  {user.email}
+                </p>
+              </div>
+              <div className="py-1">
+                <button
+                  type="button"
+                  onClick={openEditInterestsModal}
+                  className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
+                    isDark
+                      ? "text-[#edebe8] hover:bg-[#252524]"
+                      : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                  }`}
+                >
+                  Edit interests
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
+                    isDark
+                      ? "text-[#edebe8] hover:bg-[#252524]"
+                      : "text-[#1a1a1a] hover:bg-[#f5f5f4]"
+                  }`}
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
           )}
         </div>
