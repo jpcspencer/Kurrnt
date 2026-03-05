@@ -1,4 +1,5 @@
 import { KEPLER_SYSTEM_PROMPT } from "@/lib/system-prompt";
+import { createClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -37,10 +38,28 @@ export async function POST(request: Request) {
       );
     }
 
+    let systemPrompt = KEPLER_SYSTEM_PROMPT;
+    try {
+      const supabase = await createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const interests = session?.user?.user_metadata?.interests;
+      if (Array.isArray(interests) && interests.length > 0) {
+        const validInterests = interests.filter((i): i is string => typeof i === "string");
+        if (validInterests.length > 0) {
+          systemPrompt = `${KEPLER_SYSTEM_PROMPT}
+
+## User Context
+The user has saved interests: ${validInterests.join(", ")}. When relevant, tailor your responses and Kepler's Insight to draw connections to these areas. If they care about AI and Neuroscience, for example, surface those connections naturally. Do not force it — only when the connection is genuine and adds value.`;
+        }
+      }
+    } catch {
+      // Fall back to default system prompt
+    }
+
     const requestBody = {
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: KEPLER_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: "user", content: message }],
     };
 

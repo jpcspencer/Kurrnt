@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ type ClaudeEnrichment = {
   tag?: string;
 };
 
-const ENRICHMENT_SYSTEM =
+const ENRICHMENT_SYSTEM_BASE =
   "You are Kepler, a warm and curious AI research companion. You interpret science and technology news with intelligence and clarity. Always respond in valid JSON only, no markdown, no backticks. The importance field MUST be a number between 1 and 5.";
 
 const ENRICHMENT_USER_TEMPLATE = `Enrich this article for the Kurrnt feed. Return a JSON object with these fields:
@@ -46,7 +47,8 @@ const ENRICHMENT_USER_TEMPLATE = `Enrich this article for the Kurrnt feed. Retur
 
 Article title: {title}
 Article description: {description}
-{importanceHint}`;
+{importanceHint}
+{interestsHint}`;
 
 function parseImportance(value: unknown): number | null {
   if (typeof value === "number" && !Number.isNaN(value)) {
@@ -61,13 +63,27 @@ function parseImportance(value: unknown): number | null {
   return null;
 }
 
-async function enrichArticle(article: RawArticle, anthropicKey: string): Promise<EnrichedArticle> {
+async function enrichArticle(
+  article: RawArticle,
+  anthropicKey: string,
+  userInterests?: string[]
+): Promise<EnrichedArticle> {
   const hintLine = article.importanceHint
     ? `Suggested importance based on source metrics: ${article.importanceHint}. You may adjust based on content significance.`
     : "";
+  const interestsHint =
+    userInterests && userInterests.length > 0
+      ? `\nThe user is particularly interested in: ${userInterests.join(", ")}. When generating keplersInsight, emphasize connections and insights relevant to these areas when genuinely applicable. Do not force connections — only when the link is meaningful.`
+      : "";
   const userPrompt = ENRICHMENT_USER_TEMPLATE.replace("{title}", article.title)
     .replace("{description}", article.description)
-    .replace("{importanceHint}", hintLine);
+    .replace("{importanceHint}", hintLine)
+    .replace("{interestsHint}", interestsHint);
+
+  const systemPrompt =
+    userInterests && userInterests.length > 0
+      ? `${ENRICHMENT_SYSTEM_BASE} When the article relates to the user's interests (${userInterests.join(", ")}), prioritize insights that connect to those areas.`
+      : ENRICHMENT_SYSTEM_BASE;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -80,7 +96,7 @@ async function enrichArticle(article: RawArticle, anthropicKey: string): Promise
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
-        system: ENRICHMENT_SYSTEM,
+        system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
       }),
     });
@@ -345,6 +361,18 @@ export async function GET() {
       );
     }
 
+    let userInterests: string[] | undefined;
+    try {
+      const supabase = await createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const interests = session?.user?.user_metadata?.interests;
+      if (Array.isArray(interests) && interests.length > 0) {
+        userInterests = interests.filter((i): i is string => typeof i === "string");
+      }
+    } catch {
+      // Fall back to default — no personalization
+    }
+
     const sources: Promise<RawArticle[]>[] = [];
 
     if (newsApiKey) {
@@ -370,7 +398,9 @@ export async function GET() {
       return desc.length >= 50;
     });
 
-    const enriched = await Promise.all(withEnoughDescription.map((a) => enrichArticle(a, anthropicKey)));
+    const enriched = await Promise.all(
+      withEnoughDescription.map((a) => enrichArticle(a, anthropicKey, userInterests))
+    );
 
     enriched.sort((a, b) => b.importance - a.importance);
 
