@@ -169,14 +169,14 @@ export default function LandingPage() {
           Pure signal, no noise.
         </p>
         <Link
-          href="/feed"
+          href="/onboarding"
           className={`inline-flex items-center justify-center rounded px-10 py-4 text-sm font-medium tracking-wide transition-all duration-200 ${
             isDark
               ? "bg-white text-[#111110] hover:opacity-90"
               : "bg-[#1a1a1a] text-white hover:opacity-90"
           }`}
         >
-          Enter Kurrnt
+          Get Started
         </Link>
       </section>
 
