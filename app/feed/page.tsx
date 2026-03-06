@@ -143,6 +143,7 @@ export default function FeedPage() {
   const [newStories, setNewStories] = useState<FeedArticle[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
   const [storyOfWeekDismissed, setStoryOfWeekDismissed] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
@@ -197,6 +198,10 @@ export default function FeedPage() {
     const key = storyOfWeek.url || storyOfWeek.title;
     return sortedArticles.filter((a) => (a.url || a.title) !== key);
   }, [sortedArticles, storyOfWeek]);
+
+  const handleImageError = useCallback((url: string) => {
+    setFailedImageUrls((prev) => new Set(prev).add(url));
+  }, []);
 
   function dismissStoryOfWeek(article: FeedArticle) {
     const key = article.url || article.title;
@@ -538,12 +543,13 @@ export default function FeedPage() {
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {expandedArticle.urlToImage && (
+            {expandedArticle.urlToImage && !failedImageUrls.has(expandedArticle.urlToImage) && (
               <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                 <img
                   src={expandedArticle.urlToImage}
                   alt=""
                   className="h-full w-full object-cover"
+                  onError={() => handleImageError(expandedArticle.urlToImage!)}
                 />
               </div>
             )}
@@ -1272,9 +1278,14 @@ export default function FeedPage() {
                         }`}
                       >
                         {/* Full card content - image, title, summary, insight, suggested questions */}
-                        {article.urlToImage && (
+                        {article.urlToImage && !failedImageUrls.has(article.urlToImage) && (
                           <div className="h-40 w-full overflow-hidden rounded-t-lg">
-                            <img src={article.urlToImage} alt="" className="h-full w-full object-cover" />
+                            <img
+                              src={article.urlToImage}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              onError={() => handleImageError(article.urlToImage!)}
+                            />
                           </div>
                         )}
                         <div className={isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}>
@@ -1443,9 +1454,14 @@ export default function FeedPage() {
                         isDark ? "bg-[#1c1c1b] hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]" : "bg-[#ffffff]"
                       }`}
                     >
-                      {article.urlToImage && (
+                      {article.urlToImage && !failedImageUrls.has(article.urlToImage) && (
                         <div className="h-40 w-full overflow-hidden rounded-t-lg">
-                          <img src={article.urlToImage} alt="" className="h-full w-full object-cover" />
+                          <img
+                            src={article.urlToImage}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={() => handleImageError(article.urlToImage!)}
+                          />
                         </div>
                       )}
                       <div className={isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}>
