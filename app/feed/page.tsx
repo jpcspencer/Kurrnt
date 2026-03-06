@@ -959,7 +959,7 @@ export default function FeedPage() {
                             {article.keplersInsight && (
                               <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
                                 <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`}>KEPLER&apos;S INSIGHT</p>
-                                <p className={`text-sm italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
+                                <p className={`text-sm italic leading-relaxed break-words ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
                               </div>
                             )}
                           </div>
@@ -977,8 +977,8 @@ export default function FeedPage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+                        <div className="flex flex-col">
+                          <div className={`overflow-y-auto ${messages.length > 0 || keplerLoading || keplerError ? "max-h-[40vh] px-4 py-2 sm:px-6" : "px-4 py-0 sm:px-6"}`}>
                             <div className="space-y-4">
                             {messages.map((msg, i) => (
                               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -1011,7 +1011,7 @@ export default function FeedPage() {
                             )}
                             </div>
                           </div>
-                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t p-3 sm:px-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t px-4 py-2 sm:px-6" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
                             <div className="flex gap-2">
                               <input
                                 type="text"
@@ -1091,7 +1091,7 @@ export default function FeedPage() {
                             {article.keplersInsight && (
                               <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
                                 <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`}>KEPLER&apos;S INSIGHT</p>
-                                <p className={`text-sm italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
+                                <p className={`text-sm italic leading-relaxed break-words ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
                               </div>
                             )}
                           </div>
@@ -1109,8 +1109,8 @@ export default function FeedPage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+                        <div className="flex flex-col">
+                          <div className={`overflow-y-auto ${messages.length > 0 || keplerLoading || keplerError ? "max-h-[40vh] px-4 py-2 sm:px-6" : "px-4 py-0 sm:px-6"}`}>
                             <div className="space-y-4">
                               {messages.map((msg, i) => (
                                 <div
@@ -1146,7 +1146,7 @@ export default function FeedPage() {
                               )}
                             </div>
                           </div>
-                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t p-3 sm:px-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t px-4 py-2 sm:px-6" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
                             <div className="flex gap-2">
                               <input
                                 type="text"
