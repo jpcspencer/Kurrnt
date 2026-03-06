@@ -64,8 +64,8 @@ function getTextContent(children: React.ReactNode): string {
 }
 
 function ResponseContent({ content, isDark }: { content: string; isDark: boolean }) {
-  const textCls = isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]";
-  const strongCls = isDark ? "font-semibold text-[#e8edf5]" : "font-semibold text-[#0a0f1e]";
+  const textCls = isDark ? "text-[#edebe8]" : "text-[#1a1a1a]";
+  const strongCls = isDark ? "font-semibold text-[#edebe8]" : "font-semibold text-[#1a1a1a]";
   return (
     <ReactMarkdown
       components={{
@@ -74,8 +74,8 @@ function ResponseContent({ content, isDark }: { content: string; isDark: boolean
           const isInsight = text.trimStart().startsWith("Kepler's Insight") || text.trimStart().startsWith("⚡ NoC") || text.trimStart().toLowerCase().includes("kepler's insight");
           if (isInsight) {
             return (
-              <div className={`mt-4 rounded-lg border-l-2 pl-4 py-3 first:mt-0 ${isDark ? "border-l-[#2563eb]" : "border-l-[#2563eb]"}`}>
-                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`} style={{ marginBottom: "0.25rem" }}>KEPLER'S INSIGHT</p>
+              <div className={`mt-4 rounded-lg border-l-2 pl-4 py-3 first:mt-0 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`} style={{ marginBottom: "0.25rem" }}>KEPLER'S INSIGHT</p>
                 <p className={`text-sm leading-relaxed italic ${textCls}`}>{children}</p>
               </div>
             );
@@ -314,7 +314,7 @@ export default function FeedPage() {
   }
 
   async function handleSaveInterests() {
-    if (modalInterests.size < 3) return;
+    if (modalInterests.size < 1) return;
     setInterestsSaving(true);
     const supabase = createClient();
     await supabase.auth.updateUser({ data: { interests: Array.from(modalInterests) } });
@@ -415,7 +415,7 @@ export default function FeedPage() {
   return (
     <div
       className={`flex min-h-screen w-full flex-col transition-colors duration-200 ${
-        isDark ? "bg-[#0a0f1e]" : "bg-[#f4f6fb]"
+        isDark ? "bg-[#111110]" : "bg-[#f8f7f5]"
       }`}
     >
       {/* Article expansion modal */}
@@ -433,7 +433,7 @@ export default function FeedPage() {
           />
           <div
             className={`relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.12)] animate-[modal-fade-in_0.2s_ease-out] ${
-              isDark ? "bg-[#111827]" : "bg-[#ffffff] shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
+              isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff] shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
             }`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -451,7 +451,7 @@ export default function FeedPage() {
               onClick={() => setExpandedArticle(null)}
               aria-label="Close"
               className={`absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
-                isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
@@ -461,7 +461,7 @@ export default function FeedPage() {
             </button>
             <div className="px-6 py-6 pr-14 sm:px-8 sm:py-8 sm:pr-16">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
+                <span className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                   {expandedArticle.tag}
                 </span>
                 <div className="flex gap-0.5" aria-label={`Importance: ${expandedArticle.importance} of 5`}>
@@ -471,29 +471,29 @@ export default function FeedPage() {
                       className={`h-1 w-1 shrink-0 rounded-full ${
                         i <= expandedArticle.importance
                           ? isDark
-                            ? "bg-[#e8edf5]"
-                            : "bg-[#0a0f1e]"
+                            ? "bg-[#edebe8]"
+                            : "bg-[#111110]"
                           : isDark
-                            ? "border border-[#1e2d4a] bg-transparent"
-                            : "border border-[#dde3ed] bg-transparent"
+                            ? "border border-[#3a3a39] bg-transparent"
+                            : "border border-[#d4d4d4] bg-transparent"
                       }`}
                     />
                   ))}
                 </div>
-                <time className={`text-xs ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`} dateTime={expandedArticle.publishedAt}>
+                <time className={`text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`} dateTime={expandedArticle.publishedAt}>
                   {formatRelativeTime(expandedArticle.publishedAt)}
                 </time>
               </div>
-              <h2 id="modal-title" className={`mb-2 font-serif text-xl font-medium leading-tight sm:text-2xl ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>
+              <h2 id="modal-title" className={`mb-2 font-serif text-xl font-medium leading-tight sm:text-2xl ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
                 {expandedArticle.title}
               </h2>
-              <p className={`mb-6 text-sm leading-relaxed ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
+              <p className={`mb-6 text-sm leading-relaxed ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                 {expandedArticle.keplerSummary}
               </p>
               {expandedArticle.keplersInsight && (
-                <div className={`mb-6 rounded-r border-l-2 pl-4 py-3 ${isDark ? "border-l-[#2563eb]" : "border-l-[#2563eb]"}`}>
-                  <p className={`text-[10px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>KEPLER'S INSIGHT</p>
-                  <p className={`mt-1 text-sm leading-relaxed italic ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>
+                <div className={`mb-6 rounded-r border-l-2 pl-4 py-3 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                  <p className={`text-[10px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>KEPLER'S INSIGHT</p>
+                  <p className={`mt-1 text-sm leading-relaxed italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
                     {expandedArticle.keplersInsight}
                   </p>
                 </div>
@@ -527,8 +527,8 @@ export default function FeedPage() {
                       }}
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                         isDark
-                          ? "border-[#1e2d4a] bg-transparent text-[#e8edf5] hover:bg-[#111827]"
-                          : "border-[#dde3ed] bg-transparent text-[#0a0f1e] hover:bg-[#dde3ed]"
+                          ? "border-[#2a2a29] bg-transparent text-[#edebe8] hover:bg-[#1c1c1b]"
+                          : "border-[#e5e4e2] bg-transparent text-[#111110] hover:bg-[#e5e4e2]"
                       }`}
                     >
                       {label}
@@ -540,7 +540,7 @@ export default function FeedPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`inline-flex w-fit items-center gap-1.5 text-xs transition-colors ${
-                    isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                    isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
                   }`}
                 >
                   Read original article
@@ -567,12 +567,12 @@ export default function FeedPage() {
           />
           <div
             className={`relative w-full max-w-md overflow-hidden rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.12)] animate-[modal-fade-in_0.2s_ease-out] ${
-              isDark ? "bg-[#111827]" : "bg-[#ffffff] shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
+              isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff] shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b px-6 py-4" style={isDark ? { borderColor: "#1e2d4a" } : { borderColor: "#dde3ed" }}>
-              <h2 id="edit-interests-title" className={`font-serif text-lg font-medium ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>
+            <div className="flex items-center justify-between border-b px-6 py-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+              <h2 id="edit-interests-title" className={`font-serif text-lg font-medium ${isDark ? "text-[#edebe8]" : "text-[#111110]"}`}>
                 Update your interests
               </h2>
               <button
@@ -580,7 +580,7 @@ export default function FeedPage() {
                 onClick={() => setEditInterestsModalOpen(false)}
                 aria-label="Close"
                 className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
-                  isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                  isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -590,8 +590,8 @@ export default function FeedPage() {
               </button>
             </div>
             <div className="px-6 py-6">
-              <p className={`mb-4 text-sm ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
-                Select at least 3 topics
+              <p className={`mb-4 text-sm ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                Select at least 1 topic
               </p>
               <div className="mb-6 flex flex-wrap gap-2">
                 {INTERESTS.map((topic) => {
@@ -604,11 +604,11 @@ export default function FeedPage() {
                       className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                         selected
                           ? isDark
-                            ? "bg-[#2563eb] text-white"
-                            : "bg-[#2563eb] text-white"
+                            ? "bg-white text-[#111110]"
+                            : "bg-[#1a1a1a] text-white"
                           : isDark
-                            ? "border border-[#1e2d4a] text-[#e8edf5] hover:bg-[#111827]"
-                            : "border border-[#dde3ed] text-[#0a0f1e] hover:bg-[#dde3ed]"
+                            ? "border border-[#2a2a29] text-[#edebe8] hover:bg-[#1c1c1b]"
+                            : "border border-[#e5e4e2] text-[#111110] hover:bg-[#e5e4e2]"
                       }`}
                     >
                       {topic}
@@ -622,8 +622,8 @@ export default function FeedPage() {
                   onClick={() => setEditInterestsModalOpen(false)}
                   className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
                     isDark
-                      ? "text-[#8896a8] hover:text-[#e8edf5]"
-                      : "text-[#4a5568] hover:text-[#0a0f1e]"
+                      ? "text-[#888886] hover:text-[#edebe8]"
+                      : "text-[#6b6b6b] hover:text-[#111110]"
                   }`}
                 >
                   Cancel
@@ -631,11 +631,11 @@ export default function FeedPage() {
                 <button
                   type="button"
                   onClick={handleSaveInterests}
-                  disabled={modalInterests.size < 3 || interestsSaving}
+                  disabled={modalInterests.size < 1 || interestsSaving}
                   className={`rounded px-6 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                     isDark
-                      ? "bg-[#2563eb] text-white hover:opacity-90"
-                      : "bg-[#2563eb] text-white hover:opacity-90"
+                      ? "bg-white text-[#111110] hover:opacity-90"
+                      : "bg-[#1a1a1a] text-white hover:opacity-90"
                   }`}
                 >
                   {interestsSaving ? "Saving…" : "Save"}
@@ -653,8 +653,8 @@ export default function FeedPage() {
           aria-label="Back to top"
           className={`fixed bottom-6 right-6 z-10 flex h-9 w-9 items-center justify-center rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-0 ${
             isDark
-              ? "bg-[#111827]/80 text-[#e8edf5] shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-              : "bg-[#ffffff]/80 text-[#0a0f1e] shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+              ? "bg-[#1c1c1b]/80 text-[#edebe8] shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+              : "bg-[#ffffff]/80 text-[#111110] shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
           }`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -672,7 +672,7 @@ export default function FeedPage() {
               aria-label="Profile"
               aria-expanded={profileOpen}
               className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-0 ${
-                isDark ? "ring-1 ring-[#1e2d4a]" : "ring-1 ring-[#dde3ed]"
+                isDark ? "ring-1 ring-[#2a2a29]" : "ring-1 ring-[#e5e4e2]"
               }`}
             >
               {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
@@ -684,7 +684,7 @@ export default function FeedPage() {
               ) : (
                 <span
                   className={`text-xs font-medium ${
-                    isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"
+                    isDark ? "text-[#edebe8]" : "text-[#111110]"
                   }`}
                 >
                   {getInitial(user.email)}
@@ -696,8 +696,8 @@ export default function FeedPage() {
               href="/signin"
               className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 isDark
-                  ? "text-[#8896a8] hover:text-[#e8edf5]"
-                  : "text-[#4a5568] hover:text-[#0a0f1e]"
+                  ? "text-[#888886] hover:text-[#edebe8]"
+                  : "text-[#6b6b6b] hover:text-[#111110]"
               }`}
             >
               Sign in
@@ -707,12 +707,12 @@ export default function FeedPage() {
             <div
               className={`absolute right-0 top-full z-20 mt-2 min-w-[220px] rounded-lg py-2 shadow-[0_4px_16px_rgba(0,0,0,0.12)] ${
                 isDark
-                  ? "border border-[#1e2d4a] bg-[#111827]"
-                  : "border border-[#dde3ed] bg-[#ffffff] shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
+                  ? "border border-[#2a2a29] bg-[#1c1c1b]"
+                  : "border border-[#e5e4e2] bg-[#ffffff] shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
               }`}
             >
-              <div className={`border-b px-4 py-3 ${isDark ? "border-[#1e2d4a]" : "border-[#dde3ed]"}`}>
-                <p className={`truncate text-xs ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
+              <div className={`border-b px-4 py-3 ${isDark ? "border-[#2a2a29]" : "border-[#e5e4e2]"}`}>
+                <p className={`truncate text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                   {user.email}
                 </p>
               </div>
@@ -722,8 +722,8 @@ export default function FeedPage() {
                   onClick={openEditInterestsModal}
                   className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
                     isDark
-                      ? "text-[#e8edf5] hover:bg-[#111827]"
-                      : "text-[#0a0f1e] hover:bg-[#dde3ed]"
+                      ? "text-[#edebe8] hover:bg-[#1c1c1b]"
+                      : "text-[#111110] hover:bg-[#e5e4e2]"
                   }`}
                 >
                   Edit interests
@@ -733,8 +733,8 @@ export default function FeedPage() {
                   onClick={handleSignOut}
                   className={`flex w-full items-center px-4 py-2 text-left text-sm transition-colors ${
                     isDark
-                      ? "text-[#e8edf5] hover:bg-[#111827]"
-                      : "text-[#0a0f1e] hover:bg-[#dde3ed]"
+                      ? "text-[#edebe8] hover:bg-[#1c1c1b]"
+                      : "text-[#111110] hover:bg-[#e5e4e2]"
                   }`}
                 >
                   Sign out
@@ -749,8 +749,8 @@ export default function FeedPage() {
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-0 ${
             isDark
-              ? "text-[#8896a8] hover:text-[#e8edf5]"
-              : "text-[#4a5568] hover:text-[#0a0f1e]"
+              ? "text-[#888886] hover:text-[#edebe8]"
+              : "text-[#6b6b6b] hover:text-[#111110]"
           }`}
         >
           {isDark ? (
@@ -769,7 +769,7 @@ export default function FeedPage() {
         <div className="mx-auto w-full max-w-[680px]">
         <h1
           className={`mb-4 font-serif text-3xl font-normal tracking-tight sm:mb-5 sm:text-4xl ${
-            isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"
+            isDark ? "text-[#edebe8]" : "text-[#111110]"
           }`}
         >
           <Link
@@ -808,8 +808,8 @@ export default function FeedPage() {
                   title={`Sort by ${feedSort}`}
                   className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                     isDark
-                      ? "text-[#8896a8] hover:bg-[#111827] hover:text-[#e8edf5]"
-                      : "text-[#4a5568] hover:bg-[#dde3ed] hover:text-[#0a0f1e]"
+                      ? "text-[#888886] hover:bg-[#1c1c1b] hover:text-[#edebe8]"
+                      : "text-[#6b6b6b] hover:bg-[#e5e4e2] hover:text-[#111110]"
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 shrink-0">
@@ -828,8 +828,8 @@ export default function FeedPage() {
                     role="listbox"
                     className={`absolute left-0 top-full z-20 mt-1 min-w-[120px] rounded-md py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)] ${
                       isDark
-                        ? "border border-[#1e2d4a] bg-[#111827]"
-                        : "border border-[#dde3ed] bg-[#ffffff] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                        ? "border border-[#2a2a29] bg-[#1c1c1b]"
+                        : "border border-[#e5e4e2] bg-[#ffffff] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                     }`}
                   >
                     {(["importance", "newest", "source"] as const).map((opt) => (
@@ -846,11 +846,11 @@ export default function FeedPage() {
                         className={`w-full px-3 py-2 text-left text-xs font-medium capitalize transition-colors first:rounded-t-[5px] last:rounded-b-[5px] ${
                           feedSort === opt
                             ? isDark
-                              ? "bg-[#111827] text-[#e8edf5]"
-                              : "bg-[#dde3ed] text-[#0a0f1e]"
+                              ? "bg-[#1c1c1b] text-[#edebe8]"
+                              : "bg-[#e5e4e2] text-[#111110]"
                             : isDark
-                              ? "text-[#e8edf5] hover:bg-[#111827]"
-                              : "text-[#0a0f1e] hover:bg-[#dde3ed]"
+                              ? "text-[#edebe8] hover:bg-[#1c1c1b]"
+                              : "text-[#111110] hover:bg-[#e5e4e2]"
                         }`}
                       >
                         {opt}
@@ -861,7 +861,7 @@ export default function FeedPage() {
               </div>
               <button type="button" onClick={cycleCardSize} title={`Card size: ${cardSize.charAt(0).toUpperCase() + cardSize.slice(1)}`} aria-label={`Card size: ${cardSize}`}
                 className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 ${
-                  isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                  isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
@@ -872,7 +872,7 @@ export default function FeedPage() {
               </button>
               <button type="button" onClick={toggleFeedView} title={feedView === "card" ? "Switch to list view" : "Switch to card view"} aria-label={feedView === "card" ? "Switch to list view" : "Switch to card view"}
                 className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 ${
-                  isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                  isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
                 }`}
               >
                 {feedView === "card" ? (
@@ -895,7 +895,7 @@ export default function FeedPage() {
               </button>
               <button type="button" onClick={fetchFeed} disabled={feedLoading} title="Refresh feed" aria-label="Refresh feed"
                 className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:opacity-80 focus:outline-none focus:ring-0 disabled:opacity-50 ${
-                  isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                  isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
                 }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 ${feedLoading ? "animate-spin" : ""}`}>
@@ -915,8 +915,8 @@ export default function FeedPage() {
                 }}
                 className={`w-full rounded-full px-3 py-1.5 text-xs font-medium transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${
                   isDark
-                    ? "bg-[#111827] text-[#8896a8] hover:bg-[#111827] hover:text-[#e8edf5]"
-                    : "bg-[#ffffff] text-[#4a5568] hover:bg-[#dde3ed] hover:text-[#0a0f1e]"
+                    ? "bg-[#1c1c1b] text-[#888886] hover:bg-[#1c1c1b] hover:text-[#edebe8]"
+                    : "bg-[#ffffff] text-[#6b6b6b] hover:bg-[#e5e4e2] hover:text-[#111110]"
                 }`}
               >
                 ↑ {newStories.length} new {newStories.length === 1 ? "story" : "stories"}
@@ -924,7 +924,7 @@ export default function FeedPage() {
             )}
             {feedLoading && feedArticles.length === 0 && (
               <div className="flex w-full items-center justify-center py-16">
-                <div className={`flex items-center gap-2 ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
+                <div className={`flex items-center gap-2 ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                   <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -937,10 +937,10 @@ export default function FeedPage() {
               <p className={`w-full py-8 text-center text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{feedError}</p>
             )}
             {!feedError && feedArticles.length === 0 && !feedLoading && (
-              <p className={`w-full py-8 text-center text-sm ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>No articles to show.</p>
+              <p className={`w-full py-8 text-center text-sm ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>No articles to show.</p>
             )}
             {!feedError && feedView === "list" && (
-              <div className={`w-full rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#111827]" : "bg-[#ffffff]"}`}>
+              <div className={`w-full rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff]"}`}>
                 {sortedArticles.map((article, index) => {
                   const isKeplerExpanded = keplerExpandedArticle?.url === article.url || (keplerExpandedArticle?.title === article.title && !article.url);
                   if (isKeplerExpanded && keplerExpandedArticle) {
@@ -949,17 +949,17 @@ export default function FeedPage() {
                     return (
                       <div
                         key={article.url || index}
-                        className={`border-b animate-[kepler-expand-in_0.25s_ease-out] ${isDark ? "border-[#1e2d4a] bg-[#111827]" : "border-[#dde3ed] bg-[#ffffff]"}`}
+                        className={`flex flex-col border-b animate-[kepler-expand-in_0.25s_ease-out] ${isDark ? "border-[#2a2a29] bg-[#1c1c1b]" : "border-[#f0f0ef] bg-[#ffffff]"}`}
                       >
-                        <div className="relative flex items-start justify-between border-b px-4 py-4 sm:px-6" style={isDark ? { borderColor: "#1e2d4a" } : { borderColor: "#dde3ed" }}>
+                        <div className="relative flex shrink-0 items-start justify-between border-b px-4 py-3 sm:px-6" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
                           <div className="min-w-0 flex-1 pr-10">
-                            <h3 className={`font-serif text-lg font-medium leading-tight ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>
+                            <h3 className={`font-serif text-lg font-medium leading-tight ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
                               {article.title}
                             </h3>
                             {article.keplersInsight && (
-                              <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#2563eb]" : "border-l-[#2563eb]"}`}>
-                                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>KEPLER&apos;S INSIGHT</p>
-                                <p className={`text-sm italic ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>{article.keplersInsight}</p>
+                              <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`}>KEPLER&apos;S INSIGHT</p>
+                                <p className={`text-sm italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
                               </div>
                             )}
                           </div>
@@ -967,8 +967,8 @@ export default function FeedPage() {
                             type="button"
                             onClick={() => setKeplerExpandedArticle(null)}
                             aria-label="Close"
-                            className={`absolute right-4 top-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
-                              isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                            className={`absolute right-4 top-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
+                              isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#1a1a1a]"
                             }`}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -977,15 +977,16 @@ export default function FeedPage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="max-h-[50vh] overflow-y-auto px-4 py-4 sm:px-6">
-                          <div className="space-y-4">
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+                            <div className="space-y-4">
                             {messages.map((msg, i) => (
                               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                                 <div
                                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                                     msg.role === "user"
-                                      ? isDark ? "bg-[#2563eb] text-white" : "bg-[#2563eb] text-white"
-                                      : isDark ? "bg-[#111827] text-[#e8edf5]" : "bg-[#dde3ed] text-[#0a0f1e]"
+                                      ? isDark ? "bg-white text-[#111110]" : "bg-[#1a1a1a] text-white"
+                                      : isDark ? "bg-[#252524] text-[#edebe8]" : "bg-[#f5f5f4] text-[#1a1a1a]"
                                   }`}
                                 >
                                   {msg.role === "assistant" ? (
@@ -997,7 +998,7 @@ export default function FeedPage() {
                               </div>
                             ))}
                             {keplerLoading && (
-                              <div className={`flex items-center gap-2 ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
+                              <div className={`flex items-center gap-2 ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                                 <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1008,44 +1009,45 @@ export default function FeedPage() {
                             {keplerError && !keplerLoading && (
                               <p className={`text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{keplerError}</p>
                             )}
+                            </div>
                           </div>
+                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t p-3 sm:px-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={keplerMessage}
+                                onChange={(e) => setKeplerMessage(e.target.value)}
+                                placeholder="Ask Kepler about this story..."
+                                disabled={keplerLoading}
+                                className={`flex-1 rounded-md py-2.5 pl-3 pr-3 text-sm transition-colors focus:outline-none focus:ring-0 disabled:opacity-60 ${
+                                  isDark ? "bg-[#252524] text-[#edebe8] placeholder:text-[#888886]" : "bg-[#f5f5f4] text-[#1a1a1a] placeholder:text-[#6b6b6b]"
+                                }`}
+                              />
+                              <button
+                                type="submit"
+                                disabled={keplerLoading || !keplerMessage.trim()}
+                                className={`shrink-0 rounded px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 ${
+                                  isDark ? "bg-[#1a1a1a] text-white" : "bg-[#1a1a1a] text-white"
+                                }`}
+                                aria-label="Send"
+                              >
+                                Send
+                              </button>
+                            </div>
+                          </form>
                         </div>
-                        <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="border-t p-4" style={isDark ? { borderColor: "#1e2d4a" } : { borderColor: "#dde3ed" }}>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={keplerMessage}
-                              onChange={(e) => setKeplerMessage(e.target.value)}
-                              placeholder="Ask Kepler about this story..."
-                              disabled={keplerLoading}
-                              className={`flex-1 rounded-full py-3 pl-4 pr-4 text-sm transition-colors focus:outline-none focus:ring-0 disabled:opacity-60 ${
-                                isDark ? "bg-[#111827] text-[#e8edf5] placeholder:text-[#8896a8]" : "bg-[#dde3ed] text-[#0a0f1e] placeholder:text-[#4a5568]"
-                              }`}
-                            />
-                            <button
-                              type="submit"
-                              disabled={keplerLoading || !keplerMessage.trim()}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                              aria-label="Send"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 translate-x-0.5">
-                                <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                              </svg>
-                            </button>
-                          </div>
-                        </form>
                       </div>
                     );
                   }
-                  const mutedCls = isDark ? "text-[#8896a8]" : "text-[#4a5568]";
-                  const textCls = isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]";
+                  const mutedCls = isDark ? "text-[#888886]" : "text-[#6b6b6b]";
+                  const textCls = isDark ? "text-[#edebe8]" : "text-[#1a1a1a]";
                   return (
                     <button
                       key={article.url || index}
                       type="button"
                       onClick={() => openKeplerForArticle(article)}
                       className={`flex w-full items-center gap-3 border-b px-4 py-2.5 text-left transition-colors first:rounded-t-lg last:border-b-0 last:rounded-b-lg ${
-                        isDark ? "border-[#1e2d4a] hover:bg-[#111827]" : "border-[#dde3ed] hover:bg-[#dde3ed]"
+                        isDark ? "border-[#2a2a29] hover:bg-[#252524]" : "border-[#e5e4e2] hover:bg-[#f5f5f4]"
                       }`}
                     >
                       <span className={`shrink-0 text-xs font-medium uppercase tracking-[0.1em] ${mutedCls}`} style={{ minWidth: "4rem" }}>{article.tag}</span>
@@ -1056,8 +1058,8 @@ export default function FeedPage() {
                             key={i}
                             className={`h-1 w-1 shrink-0 rounded-full ${
                               i <= article.importance
-                                ? isDark ? "bg-[#e8edf5]" : "bg-[#0a0f1e]"
-                                : isDark ? "border border-[#1e2d4a] bg-transparent" : "border border-[#dde3ed] bg-transparent"
+                                ? isDark ? "bg-[#edebe8]" : "bg-[#1a1a1a]"
+                                : isDark ? "border border-[#3a3a39] bg-transparent" : "border border-[#d4d4d4] bg-transparent"
                             }`}
                           />
                         ))}
@@ -1077,19 +1079,19 @@ export default function FeedPage() {
                     return (
                       <div
                         key={article.url || index}
-                        className={`w-full overflow-hidden rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.08)] animate-[kepler-expand-in_0.25s_ease-out] ${
-                          isDark ? "bg-[#111827]" : "bg-[#ffffff]"
+                        className={`flex w-full flex-col overflow-hidden rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.08)] animate-[kepler-expand-in_0.25s_ease-out] ${
+                          isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff]"
                         }`}
                       >
-                        <div className="relative flex items-start justify-between border-b px-4 py-4 sm:px-6" style={isDark ? { borderColor: "#1e2d4a" } : { borderColor: "#dde3ed" }}>
+                        <div className="relative flex shrink-0 items-start justify-between border-b px-4 py-3 sm:px-6" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
                           <div className="min-w-0 flex-1 pr-10">
-                            <h3 className={`font-serif text-lg font-medium leading-tight ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>
+                            <h3 className={`font-serif text-lg font-medium leading-tight ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>
                               {article.title}
                             </h3>
                             {article.keplersInsight && (
-                              <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#2563eb]" : "border-l-[#2563eb]"}`}>
-                                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>KEPLER&apos;S INSIGHT</p>
-                                <p className={`text-sm italic ${isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]"}`}>{article.keplersInsight}</p>
+                              <div className={`mt-2 border-l-2 pl-3 py-1 ${isDark ? "border-l-[#8b7355]" : "border-l-[#c4a574]"}`}>
+                                <p className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#888888]"}`}>KEPLER&apos;S INSIGHT</p>
+                                <p className={`text-sm italic ${isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"}`}>{article.keplersInsight}</p>
                               </div>
                             )}
                           </div>
@@ -1097,8 +1099,8 @@ export default function FeedPage() {
                             type="button"
                             onClick={() => setKeplerExpandedArticle(null)}
                             aria-label="Close"
-                            className={`absolute right-4 top-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
-                              isDark ? "text-[#8896a8] hover:text-[#e8edf5]" : "text-[#4a5568] hover:text-[#0a0f1e]"
+                            className={`absolute right-4 top-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:opacity-70 ${
+                              isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#1a1a1a]"
                             }`}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -1107,76 +1109,74 @@ export default function FeedPage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="max-h-[50vh] overflow-y-auto px-4 py-4 sm:px-6">
-                          <div className="space-y-4">
-                            {messages.map((msg, i) => (
-                              <div
-                                key={i}
-                                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                              >
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+                            <div className="space-y-4">
+                              {messages.map((msg, i) => (
                                 <div
-                                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                                    msg.role === "user"
-                                      ? isDark
-                                        ? "bg-[#2563eb] text-white"
-                                        : "bg-[#2563eb] text-white"
-                                      : isDark
-                                        ? "bg-[#111827] text-[#e8edf5]"
-                                        : "bg-[#dde3ed] text-[#0a0f1e]"
-                                  }`}
+                                  key={i}
+                                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                                 >
-                                  {msg.role === "assistant" ? (
-                                    <ResponseContent content={msg.content} isDark={isDark} />
-                                  ) : (
-                                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                                  )}
+                                  <div
+                                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                                      msg.role === "user"
+                                        ? isDark ? "bg-white text-[#111110]" : "bg-[#1a1a1a] text-white"
+                                        : isDark ? "bg-[#252524] text-[#edebe8]" : "bg-[#f5f5f4] text-[#1a1a1a]"
+                                    }`}
+                                  >
+                                    {msg.role === "assistant" ? (
+                                      <ResponseContent content={msg.content} isDark={isDark} />
+                                    ) : (
+                                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                            {keplerLoading && (
-                              <div className={`flex items-center gap-2 ${isDark ? "text-[#8896a8]" : "text-[#4a5568]"}`}>
-                                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                <span className="text-sm">Thinking...</span>
-                              </div>
-                            )}
-                            {keplerError && !keplerLoading && (
-                              <p className={`text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{keplerError}</p>
-                            )}
+                              ))}
+                              {keplerLoading && (
+                                <div className={`flex items-center gap-2 ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                                  <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                  </svg>
+                                  <span className="text-sm">Thinking...</span>
+                                </div>
+                              )}
+                              {keplerError && !keplerLoading && (
+                                <p className={`text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{keplerError}</p>
+                              )}
+                            </div>
                           </div>
+                          <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="shrink-0 border-t p-3 sm:px-4" style={isDark ? { borderColor: "#2a2a29" } : { borderColor: "#e5e4e2" }}>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={keplerMessage}
+                                onChange={(e) => setKeplerMessage(e.target.value)}
+                                placeholder="Ask Kepler about this story..."
+                                disabled={keplerLoading}
+                                className={`flex-1 rounded-md py-2.5 pl-3 pr-3 text-sm transition-colors focus:outline-none focus:ring-0 disabled:opacity-60 ${
+                                  isDark ? "bg-[#252524] text-[#edebe8] placeholder:text-[#888886]" : "bg-[#f5f5f4] text-[#1a1a1a] placeholder:text-[#6b6b6b]"
+                                }`}
+                              />
+                              <button
+                                type="submit"
+                                disabled={keplerLoading || !keplerMessage.trim()}
+                                className={`shrink-0 rounded px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 ${
+                                  isDark ? "bg-[#1a1a1a] text-white" : "bg-[#1a1a1a] text-white"
+                                }`}
+                                aria-label="Send"
+                              >
+                                Send
+                              </button>
+                            </div>
+                          </form>
                         </div>
-                        <form onSubmit={(e) => handleKeplerSubmit(e, article)} className="border-t p-4 sm:p-4" style={isDark ? { borderColor: "#1e2d4a" } : { borderColor: "#dde3ed" }}>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={keplerMessage}
-                              onChange={(e) => setKeplerMessage(e.target.value)}
-                              placeholder="Ask Kepler about this story..."
-                              disabled={keplerLoading}
-                              className={`flex-1 rounded-full py-3 pl-4 pr-4 text-sm transition-colors focus:outline-none focus:ring-0 disabled:opacity-60 ${
-                                isDark ? "bg-[#111827] text-[#e8edf5] placeholder:text-[#8896a8]" : "bg-[#dde3ed] text-[#0a0f1e] placeholder:text-[#4a5568]"
-                              }`}
-                            />
-                            <button
-                              type="submit"
-                              disabled={keplerLoading || !keplerMessage.trim()}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                              aria-label="Send"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 translate-x-0.5">
-                                <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                              </svg>
-                            </button>
-                          </div>
-                        </form>
                       </div>
                     );
                   }
-                  const mutedCls = isDark ? "text-[#8896a8]" : "text-[#4a5568]";
-                  const tagCls = isDark ? "text-[#8896a8]" : "text-[#4a5568]";
-                  const textCls = isDark ? "text-[#e8edf5]" : "text-[#0a0f1e]";
+                  const mutedCls = isDark ? "text-[#888886]" : "text-[#6b6b6b]";
+                  const tagCls = isDark ? "text-[#888886]" : "text-[#6b6b6b]";
+                  const textCls = isDark ? "text-[#edebe8]" : "text-[#111110]";
                   const isCompact = cardSize === "compact";
                   const importance = article.importance;
                   const isComfortable = cardSize === "comfortable";
@@ -1189,7 +1189,7 @@ export default function FeedPage() {
                       onClick={() => setExpandedArticle(article)}
                       onKeyDown={(e) => e.key === "Enter" && setExpandedArticle(article)}
                       className={`relative w-full cursor-pointer overflow-hidden rounded-lg transition-shadow shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)] ${
-                        isDark ? "bg-[#111827] hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]" : "bg-[#ffffff]"
+                        isDark ? "bg-[#1c1c1b] hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]" : "bg-[#ffffff]"
                       }`}
                     >
                       {article.urlToImage && (
@@ -1206,8 +1206,8 @@ export default function FeedPage() {
                                 key={i}
                                 className={`shrink-0 rounded-full h-1 w-1 ${
                                   i <= importance
-                                    ? isDark ? "bg-[#e8edf5]" : "bg-[#0a0f1e]"
-                                    : isDark ? "border border-[#1e2d4a] bg-transparent" : "border border-[#dde3ed] bg-transparent"
+                                    ? isDark ? "bg-[#edebe8]" : "bg-[#111110]"
+                                    : isDark ? "border border-[#2a2a29] bg-transparent" : "border border-[#e5e4e2] bg-transparent"
                                 }`}
                               />
                             ))}
@@ -1237,7 +1237,7 @@ export default function FeedPage() {
                                 openKeplerForArticle(article);
                               }}
                               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                                isDark ? "border-[#1e2d4a] bg-transparent text-[#e8edf5] hover:bg-[#111827]" : "border-[#dde3ed] bg-transparent text-[#0a0f1e] hover:bg-[#dde3ed]"
+                                isDark ? "border-[#2a2a29] bg-transparent text-[#edebe8] hover:bg-[#1c1c1b]" : "border-[#e5e4e2] bg-transparent text-[#111110] hover:bg-[#e5e4e2]"
                               }`}
                             >
                               Ask Kepler

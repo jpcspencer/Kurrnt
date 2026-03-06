@@ -53,10 +53,10 @@ body {
 @keyframes ambient-char-fade-dark {
   0%,
   100% {
-    opacity: 0.04;
+    opacity: 0.03;
   }
   50% {
-    opacity: 0.06;
+    opacity: 0.08;
   }
 }
 
