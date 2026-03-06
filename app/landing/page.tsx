@@ -29,8 +29,7 @@ type AmbientChar = {
   char: string;
   x: number;
   y: number;
-  fadeDelay: number;
-  fadeDuration: number;
+  opacity: number;
   driftX: number;
   driftY: number;
   driftDuration: number;
@@ -70,8 +69,7 @@ export default function LandingPage() {
         char: pickRandomChar(),
         x: Math.random() * w,
         y: Math.random() * h,
-        fadeDelay: Math.random() * 6,
-        fadeDuration: 4 + Math.random() * 8,
+        opacity: 0.03 + Math.random() * 0.03,
         driftX: Math.cos(angle) * driftDistance,
         driftY: Math.sin(angle) * driftDistance,
         driftDuration,
@@ -114,7 +112,7 @@ export default function LandingPage() {
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
         aria-hidden
       >
-        {ambientChars.map(({ char, x, y, fadeDelay, fadeDuration, driftX, driftY, driftDuration, driftDelay }, i) => (
+        {ambientChars.map(({ char, x, y, opacity, driftX, driftY, driftDuration, driftDelay }, i) => (
           <span
             key={i}
             className={`absolute font-mono text-[10px] select-none ${
@@ -123,9 +121,10 @@ export default function LandingPage() {
             style={{
               left: x,
               top: y,
+              opacity,
               "--drift-x": `${driftX}px`,
               "--drift-y": `${driftY}px`,
-              animation: `ambient-char-drift ${driftDuration}s linear ${driftDelay}s infinite alternate, ambient-char-fade-${isDark ? "dark" : "light"} ${fadeDuration}s ease-in-out ${fadeDelay}s infinite`,
+              animation: `ambient-char-drift ${driftDuration}s linear ${driftDelay}s infinite alternate`,
             } as React.CSSProperties}
           >
             {char}
@@ -175,7 +174,7 @@ export default function LandingPage() {
             isDark ? "text-[#888886]" : "text-[#6b6b6b]"
           }`}
         >
-          Intelligent Media for the AI Age
+          Intelligent Media for the New Age
         </p>
         <p
           className={`mb-10 text-center text-sm leading-relaxed sm:text-base ${

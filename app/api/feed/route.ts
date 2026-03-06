@@ -266,6 +266,7 @@ function tagMatchesInterest(tag: string, interest: string): boolean {
 }
 
 const MIN_FEED_ARTICLES = 10;
+const MIN_REDDIT_IN_FEED = 3;
 
 function filterByInterests(articles: EnrichedArticle[], userInterests: string[] | undefined): EnrichedArticle[] {
   if (!userInterests || userInterests.length === 0) return articles;
@@ -273,8 +274,22 @@ function filterByInterests(articles: EnrichedArticle[], userInterests: string[] 
   const matching = articles.filter((a) =>
     userInterests.some((interest) => tagMatchesInterest(a.tag, interest))
   );
+  const redditArticles = articles.filter((a) => a.source === "reddit");
 
-  if (matching.length >= MIN_FEED_ARTICLES) return matching;
+  if (matching.length >= MIN_FEED_ARTICLES) {
+    const redditInMatching = matching.filter((a) => a.source === "reddit").length;
+    if (redditInMatching < MIN_REDDIT_IN_FEED && redditArticles.length > 0) {
+      const matchingUrls = new Set(matching.map((a) => a.url));
+      const redditToAdd = redditArticles
+        .filter((a) => !matchingUrls.has(a.url))
+        .sort((a, b) => b.importance - a.importance)
+        .slice(0, MIN_REDDIT_IN_FEED - redditInMatching);
+      const merged = [...matching, ...redditToAdd];
+      merged.sort((a, b) => b.importance - a.importance);
+      return merged;
+    }
+    return matching;
+  }
 
   const matchingUrls = new Set(matching.map((a) => a.url));
   const rest = articles
@@ -507,10 +522,15 @@ async function fetchRedditTopComments(permalink: string): Promise<string[]> {
 }
 
 async function fetchRedditSubreddit(subreddit: string): Promise<RawArticle[]> {
+  const url = `https://www.reddit.com/r/${subreddit}/hot.json?limit=5`;
   try {
-    const res = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json?limit=5`, {
+    const res = await fetch(url, {
       headers: { "User-Agent": REDDIT_USER_AGENT },
     });
+    if (!res.ok) {
+      console.warn(`[Feed API] Reddit r/${subreddit} fetch failed: ${res.status} ${res.statusText}`);
+      return [];
+    }
     const data = (await res.json()) as {
       data?: {
         children?: Array<{
@@ -527,6 +547,9 @@ async function fetchRedditSubreddit(subreddit: string): Promise<RawArticle[]> {
     };
 
     const children = data?.data?.children ?? [];
+    if (children.length === 0) {
+      console.log(`[Feed API] Reddit r/${subreddit}: 0 posts returned (URL: ${url})`);
+    }
     const articles: RawArticle[] = [];
     for (const child of children) {
       const post = child?.data;
@@ -691,10 +714,21 @@ export async function GET(request: Request) {
     const dedupedByUrl = deduplicateByUrl(allRaw);
     const deduped = deduplicateByTitle(dedupedByUrl);
 
+    const redditBeforeFilter = deduped.filter((a) => a.source === "reddit");
     const withEnoughDescription = deduped.filter((a) => {
       const desc = a.description?.trim() ?? "";
+      const title = a.title?.trim() ?? "";
+      if (a.source === "reddit") {
+        return desc.length >= 20 || title.length >= 20;
+      }
       return desc.length >= 50;
     });
+    const redditAfterFilter = withEnoughDescription.filter((a) => a.source === "reddit");
+    if (redditBeforeFilter.length !== redditAfterFilter.length) {
+      console.log(
+        `[Feed API] Reddit posts: ${redditBeforeFilter.length} before description filter, ${redditAfterFilter.length} after`
+      );
+    }
 
     const enriched = await Promise.all(
       withEnoughDescription.map((a) => enrichArticle(a, anthropicKey, userInterests))
@@ -702,6 +736,9 @@ export async function GET(request: Request) {
 
     const filtered = filterByInterests(enriched, userInterests);
     filtered.sort((a, b) => b.importance - a.importance);
+
+    const redditInFinal = filtered.filter((a) => a.source === "reddit").length;
+    console.log(`[Feed API] Final feed: ${filtered.length} articles, ${redditInFinal} from Reddit`);
 
     return NextResponse.json(filtered);
   } catch (error) {
