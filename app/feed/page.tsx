@@ -693,14 +693,14 @@ export default function FeedPage() {
             </button>
           ) : (
             <Link
-              href="/signin"
+              href="/onboarding"
               className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 isDark
                   ? "text-[#888886] hover:text-[#edebe8]"
                   : "text-[#6b6b6b] hover:text-[#111110]"
               }`}
             >
-              Sign in
+              Sign up
             </Link>
           )}
           {profileOpen && user && (
@@ -772,12 +772,22 @@ export default function FeedPage() {
             isDark ? "text-[#edebe8]" : "text-[#111110]"
           }`}
         >
-          <Link
-            href="/"
-            className="cursor-pointer no-underline transition-opacity hover:opacity-80"
-          >
-            Kurrnt
-          </Link>
+          {user ? (
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="cursor-pointer border-0 bg-transparent p-0 font-inherit no-underline transition-opacity hover:opacity-80"
+            >
+              Kurrnt
+            </button>
+          ) : (
+            <Link
+              href="/"
+              className="cursor-pointer no-underline transition-opacity hover:opacity-80"
+            >
+              Kurrnt
+            </Link>
+          )}
         </h1>
 
         </div>

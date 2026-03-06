@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
+
 const THEME_STORAGE_KEY = "kurrnt-theme";
 
 const AMBIENT_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+=<>./,;:?!@#$%&*";
@@ -39,10 +42,16 @@ function pickRandomChar() {
 }
 
 export default function LandingPage() {
+  const [user, setUser] = useState<User | null>(null);
   const [isDark, setIsDark] = useState(false);
   const [ambientChars, setAmbientChars] = useState<AmbientChar[]>([]);
 
-  // Allow signed-in users to view landing (e.g. when clicking Kurrnt wordmark from feed)
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -153,7 +162,13 @@ export default function LandingPage() {
             isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
           }`}
         >
-          Kurrnt
+          {user ? (
+            <Link href="/feed" className="cursor-pointer no-underline transition-opacity hover:opacity-80">
+              Kurrnt
+            </Link>
+          ) : (
+            <span>Kurrnt</span>
+          )}
         </h1>
         <p
           className={`mb-2 text-sm font-medium tracking-[0.2em] uppercase sm:text-base ${
