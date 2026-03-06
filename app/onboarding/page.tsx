@@ -211,7 +211,7 @@ export default function OnboardingPage() {
                 isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
               }`}
             >
-              Welcome to Kurrnt
+              Welcome{displayName.trim() ? `, ${displayName.trim()}` : " to Kurrnt"}
             </h1>
             <p
               className={`mb-10 text-sm leading-relaxed ${
