@@ -90,6 +90,12 @@ const SOURCE_ORDER = ["Hacker News", "arXiv", "GitHub", "Reddit", "News"];
 
 const THEME_STORAGE_KEY = "kurrnt-theme";
 const GUEST_INTERESTS_KEY = "kurrnt-guest-interests";
+const GUEST_NAME_KEY = "kurrnt-guest-name";
+const STORY_OF_WEEK_DISMISSED_KEY = "kurrnt-story-of-week-dismissed";
+
+function getDisplayImportance(importance: number): number {
+  return Math.min(5, Math.ceil(importance / 2));
+}
 
 function getFeedUrl(user: User | null): string {
   if (user) return "/api/feed";
@@ -137,6 +143,19 @@ export default function FeedPage() {
   const [newStories, setNewStories] = useState<FeedArticle[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [storyOfWeekDismissed, setStoryOfWeekDismissed] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(STORY_OF_WEEK_DISMISSED_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw) as unknown;
+        return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : []);
+      }
+    } catch {
+      // Ignore
+    }
+    return new Set();
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -164,6 +183,35 @@ export default function FeedPage() {
     }
     return arr;
   }, [feedArticles, feedSort]);
+
+  const storyOfWeek = useMemo(() => {
+    const byImportance = [...feedArticles].sort((a, b) => b.importance - a.importance);
+    return byImportance.find((a) => {
+      const key = a.url || a.title;
+      return key && !storyOfWeekDismissed.has(key);
+    }) ?? null;
+  }, [feedArticles, storyOfWeekDismissed]);
+
+  const articlesToShow = useMemo(() => {
+    if (!storyOfWeek) return sortedArticles;
+    const key = storyOfWeek.url || storyOfWeek.title;
+    return sortedArticles.filter((a) => (a.url || a.title) !== key);
+  }, [sortedArticles, storyOfWeek]);
+
+  function dismissStoryOfWeek(article: FeedArticle) {
+    const key = article.url || article.title;
+    if (!key) return;
+    setStoryOfWeekDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(key);
+      try {
+        localStorage.setItem(STORY_OF_WEEK_DISMISSED_KEY, JSON.stringify([...next]));
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+  }
 
   function cycleCardSize() {
     setCardSize((prev) => CARD_SIZE_ORDER[(CARD_SIZE_ORDER.indexOf(prev) + 1) % CARD_SIZE_ORDER.length]);
@@ -332,10 +380,41 @@ export default function FeedPage() {
     setEditInterestsModalOpen(false);
   }
 
-  function getInitial(email: string | undefined): string {
-    if (!email) return "?";
-    const m = email.match(/^([^@])/);
-    return (m?.[1] ?? "?").toUpperCase();
+  function getDisplayName(): string | null {
+    if (user?.user_metadata?.display_name && typeof user.user_metadata.display_name === "string") {
+      const n = user.user_metadata.display_name.trim();
+      if (n) return n;
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(GUEST_NAME_KEY);
+        if (raw) {
+          const n = (raw as string).trim();
+          if (n) return n;
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    return null;
+  }
+
+  function getInitial(): string {
+    const name = getDisplayName();
+    if (name) {
+      const parts = name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const first = parts[0]?.[0] ?? "";
+        const last = parts[parts.length - 1]?.[0] ?? "";
+        return (first + last).toUpperCase().slice(0, 2);
+      }
+      return (parts[0]?.[0] ?? "?").toUpperCase();
+    }
+    if (user?.email) {
+      const m = user.email.match(/^([^@])/);
+      return (m?.[1] ?? "?").toUpperCase();
+    }
+    return "?";
   }
 
   function openKeplerForArticle(article: FeedArticle) {
@@ -372,6 +451,7 @@ export default function FeedPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: trimmed,
+          displayName: getDisplayName(),
           articleContext: {
             title: article.title,
             keplerSummary: article.keplerSummary,
@@ -485,12 +565,12 @@ export default function FeedPage() {
                 <span className={`text-xs font-medium uppercase tracking-[0.15em] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
                   {expandedArticle.tag}
                 </span>
-                <div className="flex gap-0.5" aria-label={`Importance: ${expandedArticle.importance} of 5`}>
+                <div className="flex gap-0.5" aria-label={`Importance: ${expandedArticle.importance} of 10`}>
                   {[1, 2, 3, 4, 5].map((i) => (
                     <span
                       key={i}
                       className={`h-1 w-1 shrink-0 rounded-full ${
-                        i <= expandedArticle.importance
+                        i <= getDisplayImportance(expandedArticle.importance)
                           ? isDark
                             ? "bg-[#edebe8]"
                             : "bg-[#111110]"
@@ -716,7 +796,7 @@ export default function FeedPage() {
                     isDark ? "text-[#edebe8]" : "text-[#111110]"
                   }`}
                 >
-                  {getInitial(user.email)}
+                  {getInitial()}
                 </span>
               )}
             </button>
@@ -961,10 +1041,64 @@ export default function FeedPage() {
                 ↑ {newStories.length} new {newStories.length === 1 ? "story" : "stories"}
               </button>
             )}
+            {!feedError && !feedLoading && storyOfWeek && (
+              <article
+                role="button"
+                tabIndex={0}
+                onClick={() => setExpandedArticle(storyOfWeek)}
+                onKeyDown={(e) => e.key === "Enter" && setExpandedArticle(storyOfWeek)}
+                className={`relative w-full cursor-pointer overflow-hidden rounded-lg border-l-4 shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-[0_2px_16px_rgba(0,0,0,0.12)] ${
+                  isDark
+                    ? "border-l-[#8b7355] bg-[#1c1c1b]"
+                    : "border-l-[#c4a574] bg-[#ffffff]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <p className={`mb-1 text-[10px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                      STORY OF THE WEEK
+                    </p>
+                    <span
+                      className={`block font-serif text-lg font-medium leading-tight sm:text-xl ${
+                        isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
+                      }`}
+                    >
+                      {storyOfWeek.title}
+                    </span>
+                    <p className={`mt-1.5 line-clamp-2 text-sm leading-relaxed ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                      {storyOfWeek.keplerSummary}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className={`text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                        {storyOfWeek.tag}
+                      </span>
+                      <span className={`text-xs ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
+                        <time dateTime={storyOfWeek.publishedAt}>{formatRelativeTime(storyOfWeek.publishedAt)}</time>
+                        <span className="mx-1.5">·</span>
+                        {getSourceDisplay(storyOfWeek)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); dismissStoryOfWeek(storyOfWeek); }}
+                    aria-label="Dismiss story of the week"
+                    className={`shrink-0 rounded-full p-1.5 transition-colors hover:opacity-70 ${
+                      isDark ? "text-[#888886] hover:bg-[#252524]" : "text-[#6b6b6b] hover:bg-[#f0f0ef]"
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            )}
             {feedLoading && feedArticles.length === 0 && (
               <div className="flex w-full items-center justify-center py-16">
                 <span className={`font-serif text-sm animate-[feed-pulse_2s_ease-in-out_infinite] ${isDark ? "text-[#888886]" : "text-[#6b6b6b]"}`}>
-                  Building your feed...
+                  Building your feed{getDisplayName() ? `, ${getDisplayName()}…` : "…"}
                 </span>
               </div>
             )}
@@ -976,7 +1110,7 @@ export default function FeedPage() {
             )}
             {!feedError && feedView === "list" && (
               <div className={`w-full rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#1c1c1b]" : "bg-[#ffffff]"}`}>
-                {sortedArticles.map((article, index) => {
+                {articlesToShow.map((article, index) => {
                   const isKeplerExpanded = keplerExpandedArticle?.url === article.url || (keplerExpandedArticle?.title === article.title && !article.url);
                   if (isKeplerExpanded && keplerExpandedArticle) {
                     const key = article.url || article.title;
@@ -1106,7 +1240,7 @@ export default function FeedPage() {
                           <span
                             key={i}
                             className={`h-1 w-1 shrink-0 rounded-full ${
-                              i <= article.importance
+                              i <= getDisplayImportance(article.importance)
                                 ? isDark ? "bg-[#edebe8]" : "bg-[#1a1a1a]"
                                 : isDark ? "border border-[#3a3a39] bg-transparent" : "border border-[#d4d4d4] bg-transparent"
                             }`}
@@ -1120,7 +1254,7 @@ export default function FeedPage() {
             )}
             {!feedError && feedView === "card" && (
               <div className="flex w-full flex-col gap-3">
-                {sortedArticles.map((article, index) => {
+                {articlesToShow.map((article, index) => {
                   const isKeplerExpanded = keplerExpandedArticle?.url === article.url || (keplerExpandedArticle?.title === article.title && !article.url);
                   if (isKeplerExpanded && keplerExpandedArticle) {
                     const key = article.url || article.title;
@@ -1146,12 +1280,12 @@ export default function FeedPage() {
                         <div className={isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}>
                           <div className="mb-2 flex flex-wrap items-center gap-2">
                             <span className={`text-xs font-medium uppercase tracking-[0.12em] ${tagCls}`}>{article.tag}</span>
-                            <div className="flex gap-0.5" aria-label={`Importance: ${article.importance} of 5`}>
+                            <div className="flex gap-0.5" aria-label={`Importance: ${article.importance} of 10`}>
                               {[1, 2, 3, 4, 5].map((i) => (
                                 <span
                                   key={i}
                                   className={`shrink-0 rounded-full h-1 w-1 ${
-                                    i <= article.importance
+                                    i <= getDisplayImportance(article.importance)
                                       ? isDark ? "bg-[#edebe8]" : "bg-[#111110]"
                                       : isDark ? "border border-[#2a2a29] bg-transparent" : "border border-[#e5e4e2] bg-transparent"
                                   }`}
@@ -1295,6 +1429,7 @@ export default function FeedPage() {
                   const textCls = isDark ? "text-[#edebe8]" : "text-[#111110]";
                   const isCompact = cardSize === "compact";
                   const importance = article.importance;
+                  const displayImp = getDisplayImportance(importance);
                   const isComfortable = cardSize === "comfortable";
 
                   return (
@@ -1316,12 +1451,12 @@ export default function FeedPage() {
                       <div className={isCompact ? "p-3" : isComfortable ? "p-6" : "p-4"}>
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <span className={`text-xs font-medium uppercase tracking-[0.12em] ${tagCls}`}>{article.tag}</span>
-                          <div className="flex gap-0.5" aria-label={`Importance: ${importance} of 5`}>
+                          <div className="flex gap-0.5" aria-label={`Importance: ${importance} of 10`}>
                             {[1, 2, 3, 4, 5].map((i) => (
                               <span
                                 key={i}
                                 className={`shrink-0 rounded-full h-1 w-1 ${
-                                  i <= importance
+                                  i <= displayImp
                                     ? isDark ? "bg-[#edebe8]" : "bg-[#111110]"
                                     : isDark ? "border border-[#2a2a29] bg-transparent" : "border border-[#e5e4e2] bg-transparent"
                                 }`}

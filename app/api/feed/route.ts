@@ -46,13 +46,13 @@ type ClaudeEnrichment = {
 };
 
 const ENRICHMENT_SYSTEM_BASE =
-  "You are Kepler, a warm and curious AI research companion. You interpret science and technology news with intelligence and clarity. Always respond in valid JSON only, no markdown, no backticks. The importance field MUST be a number between 1 and 5.";
+  "You are Kepler, a warm and curious AI research companion. You interpret science and technology news with intelligence and clarity. Always respond in valid JSON only, no markdown, no backticks. The importance field MUST be a number between 1 and 10.";
 
 const ENRICHMENT_USER_TEMPLATE = `Enrich this article for the Kurrnt feed. Return a JSON object with these fields:
 - keplerSummary: a 2-3 sentence summary in Kepler's voice — clear, intelligent, no jargon, written for a curious non-expert
-- importance: a number 1-5 (integer) based on genuine significance to science and technology — must be a number, not a string
+- importance: a number 1-10 (integer). Be strict — most stories should score 4-6. Only genuine breakthroughs score 8-10. Score based on: (1) Breadth of impact: does this affect many people or industries? (2) Novelty: is this a genuine breakthrough or routine news? (3) Recency: how fresh is this? (4) Cross-domain significance: does this connect multiple fields? Must be a number, not a string.
 - keplersInsight: one sentence describing Kepler's insight — a connection between this story and something from a different field that most people wouldn't put together. Only include if genuinely interesting, otherwise return null
-- tag: one word category tag like "AI", "Space", "Biotech", "Physics", "Climate", "Cybersecurity", "Robotics", "Neuroscience", "Quantum"
+- tag: one word category tag like "AI", "Space", "Biotech", "Physics", "Climate", "Cybersecurity", "Robotics", "Neuroscience", "Quantum", "Mathematics" (for pure math proofs, applied mathematics, mathematical breakthroughs, statistics)
 {communityTakeInstruction}
 
 Article title: {title}
@@ -117,12 +117,12 @@ async function saveToCache(
 
 function parseImportance(value: unknown): number | null {
   if (typeof value === "number" && !Number.isNaN(value)) {
-    return Math.min(5, Math.max(1, Math.round(value)));
+    return Math.min(10, Math.max(1, Math.round(value)));
   }
   if (typeof value === "string") {
     const n = Number(value.trim());
     if (!Number.isNaN(n)) {
-      return Math.min(5, Math.max(1, Math.round(n)));
+      return Math.min(10, Math.max(1, Math.round(n)));
     }
   }
   return null;
@@ -138,7 +138,7 @@ async function enrichArticle(
     return {
       ...article,
       keplerSummary: cached.kepler_summary ?? article.description,
-      importance: Math.min(5, Math.max(1, cached.importance_score)),
+      importance: Math.min(10, Math.max(1, cached.importance_score)),
       keplersInsight: cached.kepler_insight ?? null,
       communityTake: cached.community_take ?? null,
       tag: cached.tag ?? article.sourceName,
@@ -208,7 +208,7 @@ async function enrichArticle(
     }
 
     const parsedImportance = parseImportance(parsed.importance);
-    const importance = parsedImportance !== null ? parsedImportance : 3;
+    const importance = parsedImportance !== null ? parsedImportance : 5;
     const keplerSummary =
       typeof parsed.keplerSummary === "string" && parsed.keplerSummary.trim()
         ? parsed.keplerSummary.trim()
@@ -249,7 +249,7 @@ async function enrichArticle(
     return {
       ...article,
       keplerSummary: article.description,
-      importance: 3,
+      importance: 5,
       keplersInsight: null,
       communityTake: null,
       tag: article.sourceName,
@@ -402,11 +402,11 @@ async function fetchHackerNews(): Promise<RawArticle[]> {
     }) => {
       const score = item.score ?? 0;
       const comments = item.descendants ?? item.kids?.length ?? 0;
-      let hintImportance = 1;
-      if (score >= 500 && comments >= 100) hintImportance = 5;
-      else if (score >= 300) hintImportance = 4;
-      else if (score >= 150) hintImportance = 3;
-      else if (score >= 75) hintImportance = 2;
+      let hintImportance = 2;
+      if (score >= 500 && comments >= 100) hintImportance = 10;
+      else if (score >= 300) hintImportance = 8;
+      else if (score >= 150) hintImportance = 6;
+      else if (score >= 75) hintImportance = 4;
       return {
         title: item.title.trim(),
         description: item.title.trim(),
@@ -460,7 +460,7 @@ async function fetchArxiv(): Promise<RawArticle[]> {
         sourceName: "arXiv",
         publishedAt: published,
         url: link,
-        importanceHint: "3 (academic paper — adjust based on content significance)",
+        importanceHint: "5-6 (academic paper — adjust based on content significance)",
       });
     }
   }
@@ -473,6 +473,8 @@ const REDDIT_SUBREDDITS = [
   "technology",
   "space",
   "Physics",
+  "math",
+  "mathematics",
   "neuroscience",
   "Biotech",
   "QuantumComputing",
@@ -616,11 +618,11 @@ async function fetchGitHubTrending(): Promise<RawArticle[]> {
         const name = (r.repositoryName ?? r.name ?? "").trim();
         const fullName = r.username ? `${r.username}/${name}` : name;
         const stars = r.totalStars ?? r.stars ?? 0;
-        let hintImportance = 1;
-        if (stars >= 10000) hintImportance = 5;
-        else if (stars >= 5000) hintImportance = 4;
-        else if (stars >= 1000) hintImportance = 3;
-        else if (stars >= 500) hintImportance = 2;
+        let hintImportance = 2;
+        if (stars >= 10000) hintImportance = 10;
+        else if (stars >= 5000) hintImportance = 8;
+        else if (stars >= 1000) hintImportance = 6;
+        else if (stars >= 500) hintImportance = 4;
         return {
           title: fullName,
           description: (r.description ?? name).trim(),

@@ -19,8 +19,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { message, articleContext, messages: conversationHistory } = body as {
+    const { message, displayName, articleContext, messages: conversationHistory } = body as {
       message?: string;
+      displayName?: string | null;
       articleContext?: { title?: string; keplerSummary?: string; keplersInsight?: string | null };
       messages?: Array<{ role: "user" | "assistant"; content: string }>;
     };
@@ -46,15 +47,26 @@ export async function POST(request: Request) {
     try {
       const supabase = await createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const interests = session?.user?.user_metadata?.interests;
+      const metadata = session?.user?.user_metadata;
+      const interests = metadata?.interests;
+      const userName = displayName ?? (typeof metadata?.display_name === "string" ? metadata.display_name.trim() : null) || null;
       if (Array.isArray(interests) && interests.length > 0) {
         const validInterests = interests.filter((i): i is string => typeof i === "string");
         if (validInterests.length > 0) {
+          let userContext = `The user has saved interests: ${validInterests.join(", ")}. When relevant, tailor your responses and Kepler's Insight to draw connections to these areas. If they care about AI and Neuroscience, for example, surface those connections naturally. Do not force it — only when the connection is genuine and adds value.`;
+          if (userName) {
+            userContext += ` The user's name is ${userName}. You may reference them naturally by name when it feels appropriate.`;
+          }
           systemPrompt = `${KEPLER_SYSTEM_PROMPT}
 
 ## User Context
-The user has saved interests: ${validInterests.join(", ")}. When relevant, tailor your responses and Kepler's Insight to draw connections to these areas. If they care about AI and Neuroscience, for example, surface those connections naturally. Do not force it — only when the connection is genuine and adds value.`;
+${userContext}`;
         }
+      } else if (userName) {
+        systemPrompt = `${KEPLER_SYSTEM_PROMPT}
+
+## User Context
+The user's name is ${userName}. You may reference them naturally by name when it feels appropriate.`;
       }
     } catch {
       // Fall back to default system prompt

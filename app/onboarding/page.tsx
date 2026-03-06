@@ -10,6 +10,8 @@ const THEME_STORAGE_KEY = "kurrnt-theme";
 const INTERESTS_COOKIE = "kurrnt-interests";
 const GUEST_INTERESTS_KEY = "kurrnt-guest-interests";
 const GUEST_INTERESTS_COOKIE = "kurrnt-guest-interests";
+const GUEST_NAME_KEY = "kurrnt-guest-name";
+const ONBOARDING_NAME_COOKIE = "kurrnt-onboarding-name";
 
 function setInterestsCookie(interests: string[]) {
   if (typeof document === "undefined") return;
@@ -22,9 +24,24 @@ function setGuestInterests(interests: string[]) {
   document.cookie = `${GUEST_INTERESTS_COOKIE}=${encodeURIComponent(JSON.stringify(interests))}; path=/; max-age=31536000; SameSite=Lax`;
 }
 
+function setGuestName(name: string) {
+  if (typeof document === "undefined") return;
+  const trimmed = name.trim();
+  if (trimmed) localStorage.setItem(GUEST_NAME_KEY, trimmed);
+}
+
+function setOnboardingNameCookie(name: string) {
+  if (typeof document === "undefined") return;
+  const trimmed = name.trim();
+  if (trimmed) {
+    document.cookie = `${ONBOARDING_NAME_COOKIE}=${encodeURIComponent(trimmed)}; path=/; max-age=600; SameSite=Lax`;
+  }
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [displayName, setDisplayName] = useState("");
   const [interests, setInterests] = useState<Set<string>>(new Set());
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -73,6 +90,7 @@ export default function OnboardingPage() {
     setAuthLoading(true);
     setAuthError(null);
     setInterestsCookie(Array.from(interests));
+    setOnboardingNameCookie(displayName);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
@@ -98,6 +116,7 @@ export default function OnboardingPage() {
     setAuthLoading(true);
     setAuthError(null);
     setInterestsCookie(Array.from(interests));
+    setOnboardingNameCookie(displayName);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
@@ -145,6 +164,47 @@ export default function OnboardingPage() {
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-16">
         {step === 1 && (
+          <section className="flex w-full max-w-md flex-col items-center">
+            <h2
+              className={`mb-2 font-serif text-2xl font-normal tracking-tight sm:text-3xl ${
+                isDark ? "text-[#edebe8]" : "text-[#1a1a1a]"
+              }`}
+            >
+              What should we call you?
+            </h2>
+            <p
+              className={`mb-6 text-sm ${
+                isDark ? "text-[#888886]" : "text-[#6b6b6b]"
+              }`}
+            >
+              We&apos;ll use this to personalize your experience
+            </p>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your name"
+              className={`mb-8 w-full rounded px-4 py-3 text-sm transition-colors focus:outline-none focus:ring-0 ${
+                isDark
+                  ? "bg-[#1c1c1b] text-[#edebe8] placeholder:text-[#888886]"
+                  : "bg-white text-[#111110] placeholder:text-[#6b6b6b]"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className={`inline-flex items-center justify-center rounded px-10 py-4 text-sm font-medium tracking-wide transition-all duration-200 ${
+                isDark
+                  ? "bg-white text-[#111110] hover:opacity-90"
+                  : "bg-[#1a1a1a] text-white hover:opacity-90"
+              }`}
+            >
+              Continue
+            </button>
+          </section>
+        )}
+
+        {step === 2 && (
           <section className="flex w-full max-w-md flex-col items-center text-center">
             <h1
               className={`mb-4 font-serif text-4xl font-normal tracking-tight sm:text-5xl ${
@@ -162,7 +222,7 @@ export default function OnboardingPage() {
             </p>
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => setStep(3)}
               className={`inline-flex items-center justify-center rounded px-10 py-4 text-sm font-medium tracking-wide transition-all duration-200 ${
                 isDark
                   ? "bg-white text-[#111110] hover:opacity-90"
@@ -174,7 +234,7 @@ export default function OnboardingPage() {
           </section>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <section className="flex w-full max-w-lg flex-col items-center">
             <h2
               className={`mb-2 font-serif text-2xl font-normal tracking-tight sm:text-3xl ${
@@ -216,7 +276,7 @@ export default function OnboardingPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className={`rounded px-6 py-3 text-sm font-medium transition-colors ${
                   isDark
                     ? "text-[#888886] hover:text-[#edebe8]"
@@ -227,7 +287,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 disabled={!canProceedFromStep2}
                 className={`inline-flex items-center justify-center rounded px-10 py-4 text-sm font-medium tracking-wide transition-all duration-200 disabled:opacity-50 ${
                   isDark
@@ -241,7 +301,7 @@ export default function OnboardingPage() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <section className="flex w-full max-w-md flex-col items-center text-center">
             <h2
               className={`mb-4 font-serif text-2xl font-normal tracking-tight sm:text-3xl ${
@@ -344,7 +404,7 @@ export default function OnboardingPage() {
 
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => setStep(3)}
               className={`mt-8 text-sm ${
                 isDark ? "text-[#888886] hover:text-[#edebe8]" : "text-[#6b6b6b] hover:text-[#111110]"
               }`}

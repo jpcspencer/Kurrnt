@@ -14,23 +14,40 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const cookieHeader = request.headers.get("cookie") ?? "";
-        const match = cookieHeader.match(/kurrnt-interests=([^;]+)/);
-        if (match) {
+        const updates: Record<string, unknown> = {};
+
+        const interestsMatch = cookieHeader.match(/kurrnt-interests=([^;]+)/);
+        if (interestsMatch) {
           try {
-            const interests = JSON.parse(decodeURIComponent(match[1])) as string[];
+            const interests = JSON.parse(decodeURIComponent(interestsMatch[1])) as string[];
             if (Array.isArray(interests) && interests.length > 0) {
-              await supabase.auth.updateUser({
-                data: { interests },
-              });
+              updates.interests = interests;
             }
           } catch {
             // Ignore parse errors
           }
         }
+
+        const nameMatch = cookieHeader.match(/kurrnt-onboarding-name=([^;]+)/);
+        if (nameMatch) {
+          try {
+            const displayName = decodeURIComponent(nameMatch[1]).trim();
+            if (displayName) {
+              updates.display_name = displayName;
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.auth.updateUser({ data: updates });
+        }
       }
 
       const response = NextResponse.redirect(`${origin}/feed`);
       response.cookies.set("kurrnt-interests", "", { maxAge: 0, path: "/" });
+      response.cookies.set("kurrnt-onboarding-name", "", { maxAge: 0, path: "/" });
       return response;
     }
   }
