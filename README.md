@@ -1,5 +1,7 @@
 # Kurrnt
 
+<img width="595" height="487" alt="image" src="https://github.com/user-attachments/assets/791dfb82-9ac2-408e-9266-d0905629f587" />
+
 **Intelligent media for the new age.**
 
 Kurrnt is an AI-native news feed built for people who want to stay sharp on AI, science, and emerging technology — without drowning in noise. It aggregates stories from multiple sources, enriches each one with AI-generated insight, and lets you go deeper through Kepler, an AI companion built into every story.
